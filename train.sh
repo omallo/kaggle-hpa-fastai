@@ -16,7 +16,7 @@ function install_dependencies() {
 
   add-apt-repository ppa:deadsnakes/ppa >/dev/null
   apt-get -y update >/dev/null
-  apt-get -y install python3.6 python3.6-dev >/dev/null
+  apt-get -y install python3.6 python3.6-pip >/dev/null
 
   apt-get -y install libsm-dev libxrender1 libxext6 zip git >/dev/null
   rm -rf /var/lib/apt/lists/*
