@@ -29,6 +29,12 @@ def f1_score_from_probs(predictions, targets, threshold=0.5):
     return torch.tensor(skl_f1_score(targets, binary_predictions, average="macro")).float().to(predictions.device)
 
 
+def acc(preds, targs, thresh=0.0):
+    preds = (preds > thresh).int()
+    targs = targs.int()
+    return (preds == targs).float().mean()
+
+
 def focal_loss(input, target, gamma=2.0):
     assert target.size() == input.size(), \
         "Target size ({}) must be the same as input size ({})".format(target.size(), input.size())
@@ -61,11 +67,7 @@ def resnet(type, pretrained, num_classes):
     resnet.conv1 = conv1
 
     resnet.avgpool = nn.AdaptiveAvgPool2d(output_size=1)
-    resnet.fc = nn.Sequential(
-        nn.BatchNorm1d(num_fc_in_channels),
-        nn.Dropout(0.5),
-        nn.Linear(num_fc_in_channels, num_classes),
-    )
+    resnet.fc = nn.Linear(num_fc_in_channels, num_classes)
 
     return resnet
 
@@ -92,12 +94,18 @@ data = (
 learner = create_cnn(
     data,
     lambda pretrained: resnet('resnet34', pretrained=pretrained, num_classes=28),
+    ps=0.5,
     loss_func=focal_loss,
-    metrics=[f1_score])
+    metrics=[f1_score, acc])
+
+print(learner.summary)
 
 # learner = Learner(data, ResNet("resnet18", 28), metrics=accuracy)
 
 learner.fit(1)
 
 learner.unfreeze()
+
 learner.fit(10)
+
+learner.save('/artifacts/model.pth')
