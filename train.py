@@ -60,6 +60,7 @@ def resnet(type, pretrained, num_classes):
 
     conv1 = nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3, bias=False)
     conv1.weight.data[:, 0:3, :, :] = resnet.conv1.weight.data
+    conv1.weight.data[:, 3, :, :] = resnet.conv1.weight.data[0]
     resnet.conv1 = conv1
 
     resnet.avgpool = nn.AdaptiveAvgPool2d(output_size=1)
@@ -97,11 +98,9 @@ learner = create_cnn(
     loss_func=focal_loss,
     metrics=[f1_score])
 
-print(learner.loss_func)
-
 # learner = Learner(data, ResNet("resnet18", 28), metrics=accuracy)
 
 learner.fit(1)
 
 learner.unfreeze()
-learner.fit(1)
+learner.fit(10)
