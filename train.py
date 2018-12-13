@@ -81,6 +81,8 @@ learner = create_cnn(
     lambda pretrained: resnet('resnet34', pretrained=pretrained, num_classes=28),
     metrics=[f1_score])
 
+print(learner.loss_func)
+
 # learner = Learner(data, ResNet("resnet18", 28), metrics=accuracy)
 
 learner.fit(1)
