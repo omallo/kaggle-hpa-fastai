@@ -1,5 +1,7 @@
 import cv2
 import PIL
+import torch.nn as nn
+import torch.nn.functional as F
 from fastai import *
 from fastai.vision import *
 from sklearn.metrics import f1_score as skl_f1_score
@@ -27,7 +29,20 @@ def f1_score(prediction_logits, targets, threshold=0.5):
 
 def f1_score_from_probs(predictions, targets, threshold=0.5):
     binary_predictions = (predictions > threshold).float()
-    return torch.tensor(skl_f1_score(targets, binary_predictions, average="macro")).float()
+    return torch.tensor(skl_f1_score(targets, binary_predictions, average="macro")).float().to(predictions.device)
+
+
+def focal_loss(input, target, gamma=2.0):
+    assert target.size() == input.size(), \
+        "Target size ({}) must be the same as input size ({})".format(target.size(), input.size())
+
+    max_val = (-input).clamp(min=0)
+    loss = input - input * target + max_val + ((-max_val).exp() + (-input - max_val).exp()).log()
+
+    invprobs = F.logsigmoid(-input * (target * 2.0 - 1.0))
+    loss = (invprobs * gamma).exp() * loss
+
+    return loss.sum(dim=1).mean()
 
 
 def resnet(type, pretrained, num_classes):
@@ -79,6 +94,7 @@ data = (
 learner = create_cnn(
     data,
     lambda pretrained: resnet('resnet34', pretrained=pretrained, num_classes=28),
+    loss_func=focal_loss,
     metrics=[f1_score])
 
 print(learner.loss_func)
