@@ -13,14 +13,20 @@ trap archive_artifacts EXIT
 
 function install_dependencies() {
   apt-get update >/dev/null
-  apt-get -y install python3-dev libsm-dev libxrender1 libxext6 zip git >/dev/null
+
+  apt-get install software-properties-common python-software-properties >/dev/null
+  add-apt-repository ppa:jonathonf/python-3.6 >/dev/null
+  apt-get -y update >/dev/null
+  apt-get -y install python3.6 >/dev/null
+
+  apt-get -y install libsm-dev libxrender1 libxext6 zip git >/dev/null
   rm -rf /var/lib/apt/lists/*
 
-  pip -q install virtualenv
-  virtualenv env --python=python3
+  pip3 -q install virtualenv
+  virtualenv env --python=python3.6
   . env/bin/activate
 
-  pip -q install -r requirements.txt
+  pip3 -q install -r requirements.txt
 }
 
 function archive_artifacts() {

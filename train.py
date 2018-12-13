@@ -1,4 +1,3 @@
-from pathlib import Path
 import cv2
 import PIL
 from fastai import *
@@ -59,7 +58,7 @@ def create_image(fn):
 
 data = (
     ImageItemList
-        .from_csv(Path('/storage/kaggle/hpa'), 'train.csv', folder='train', suffix='.png', create_func=create_image)
+        .from_csv('/storage/kaggle/hpa', 'train.csv', folder='train', suffix='.png', create_func=create_image)
         .random_split_by_pct()
         .label_from_df(sep=' ')
         .databunch()
