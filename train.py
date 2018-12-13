@@ -1,4 +1,6 @@
+from pathlib import Path
 import cv2
+import PIL
 from fastai import *
 from fastai.vision import *
 from torchvision.models import resnet18, resnet34, resnet50
@@ -51,19 +53,23 @@ class HpaImageItemList(ImageItemList):
         return pil2tensor(PIL.Image.fromarray(load_image(fn[:-4], 256)), np.float32) / 255.
 
 
+def create_image(fn):
+    return pil2tensor(PIL.Image.fromarray(load_image(fn[:-4], 256)), np.float32) / 255.
+
+
 data = (
-    HpaImageItemList
-        .from_csv('../../hpa', 'train.csv', folder='train', suffix='.png')
+    ImageItemList
+        .from_csv(Path('/storage/kaggle/hpa'), 'train.csv', folder='train', suffix='.png', create_func=create_image)
         .random_split_by_pct()
         .label_from_df(sep=' ')
         .databunch()
 )
 
-data.show_batch(rows=3)
+#data.show_batch(rows=3)
 
 learner = create_cnn(
     data,
-    lambda pretrained: resnet('resnet18', pretrained=pretrained, num_classes=28),
+    lambda pretrained: resnet('resnet34', pretrained=pretrained, num_classes=28),
     metrics=accuracy)
 
 # learner = Learner(data, ResNet("resnet18", 28), metrics=accuracy)
