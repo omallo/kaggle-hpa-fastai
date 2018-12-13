@@ -60,7 +60,7 @@ def resnet(type, pretrained, num_classes):
 
     conv1 = nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3, bias=False)
     conv1.weight.data[:, 0:3, :, :] = resnet.conv1.weight.data
-    conv1.weight.data[:, 3, :, :] = resnet.conv1.weight.data[:, 0, :, :]
+    conv1.weight.data[:, 3, :, :] = resnet.conv1.weight.data[:, 0, :, :].clone()
     resnet.conv1 = conv1
 
     resnet.avgpool = nn.AdaptiveAvgPool2d(output_size=1)
