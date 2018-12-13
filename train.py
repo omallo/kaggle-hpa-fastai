@@ -73,7 +73,7 @@ def resnet(type, pretrained, num_classes):
 
 
 def create_image(fn):
-    return pil2tensor(PIL.Image.fromarray(load_image(fn[:-4], 256)), np.float32) / 255.
+    return Image(pil2tensor(PIL.Image.fromarray(load_image(fn[:-4], 256)), np.float32) / 255.)
 
 
 class HpaImageItemList(ImageItemList):
@@ -81,15 +81,18 @@ class HpaImageItemList(ImageItemList):
         return create_image(fn)
 
 
+tfms = get_transforms(flip_vert=True, xtra_tfms=zoom_crop(scale=(0.8, 1.2), do_rand=True))
+
 data = (
     HpaImageItemList
         .from_csv('/storage/kaggle/hpa', 'train.csv', folder='train', suffix='.png', create_func=create_image)
         .random_split_by_pct()
         .label_from_df(sep=' ')
+        .transform(tfms)
         .databunch()
 )
 
-# data.show_batch(rows=3)
+data.show_batch(rows=3)
 
 learner = create_cnn(
     data,
@@ -98,7 +101,7 @@ learner = create_cnn(
     loss_func=focal_loss,
     metrics=[f1_score, acc])
 
-print(learner.summary)
+# print(learner.summary)
 
 # learner = Learner(data, ResNet("resnet18", 28), metrics=accuracy)
 
@@ -106,6 +109,7 @@ learner.fit(1)
 
 learner.unfreeze()
 
+# learner.fit(10, lr=learner.lr_range(slice(1e-2)))
 learner.fit(10)
 
 learner.save('/artifacts/model.pth')
