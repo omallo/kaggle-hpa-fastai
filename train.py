@@ -2,7 +2,7 @@ import cv2
 import PIL
 from fastai import *
 from fastai.vision import *
-from torchvision.models import resnet18, resnet34, resnet50
+from sklearn.metrics import f1_score as skl_f1_score
 
 
 def load_image(base_name, image_size):
@@ -20,15 +20,25 @@ def load_image_channel(file_path, image_size):
     return channel
 
 
+def f1_score(prediction_logits, targets, threshold=0.5):
+    predictions = torch.sigmoid(prediction_logits)
+    return f1_score_from_probs(predictions, targets, threshold)
+
+
+def f1_score_from_probs(predictions, targets, threshold=0.5):
+    binary_predictions = (predictions > threshold).float()
+    return skl_f1_score(targets, binary_predictions, average="macro")
+
+
 def resnet(type, pretrained, num_classes):
     if type == "resnet18":
-        resnet = resnet18(pretrained=pretrained)
+        resnet = models.resnet18(pretrained=pretrained)
         num_fc_in_channels = 512
     elif type == "resnet34":
-        resnet = resnet34(pretrained=pretrained)
+        resnet = models.resnet34(pretrained=pretrained)
         num_fc_in_channels = 512
     elif type == "resnet50":
-        resnet = resnet50(pretrained=pretrained)
+        resnet = models.resnet50(pretrained=pretrained)
         num_fc_in_channels = 2048
     else:
         raise Exception("Unsupported resnet model type: '{}".format(type))
@@ -69,7 +79,7 @@ data = (
 learner = create_cnn(
     data,
     lambda pretrained: resnet('resnet34', pretrained=pretrained, num_classes=28),
-    metrics=[])
+    metrics=[f1_score])
 
 # learner = Learner(data, ResNet("resnet18", 28), metrics=accuracy)
 
