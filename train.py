@@ -69,7 +69,7 @@ data = (
 learner = create_cnn(
     data,
     lambda pretrained: resnet('resnet34', pretrained=pretrained, num_classes=28),
-    metrics=accuracy)
+    metrics=[]])
 
 # learner = Learner(data, ResNet("resnet18", 28), metrics=accuracy)
 
