@@ -1,7 +1,4 @@
 import cv2
-import PIL
-import torch.nn as nn
-import torch.nn.functional as F
 from fastai import *
 from fastai.vision import *
 from sklearn.metrics import f1_score as skl_f1_score
@@ -73,13 +70,13 @@ def resnet(type, pretrained, num_classes):
     return resnet
 
 
-class HpaImageItemList(ImageItemList):
-    def open(self, fn):
-        return pil2tensor(PIL.Image.fromarray(load_image(fn[:-4], 256)), np.float32) / 255.
-
-
 def create_image(fn):
     return pil2tensor(PIL.Image.fromarray(load_image(fn[:-4], 256)), np.float32) / 255.
+
+
+class HpaImageItemList(ImageItemList):
+    def open(self, fn):
+        return create_image(fn)
 
 
 data = (
@@ -90,7 +87,7 @@ data = (
         .databunch()
 )
 
-#data.show_batch(rows=3)
+# data.show_batch(rows=3)
 
 learner = create_cnn(
     data,
