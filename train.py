@@ -57,7 +57,7 @@ def create_image(fn):
 
 
 data = (
-    ImageItemList
+    HpaImageItemList
         .from_csv('/storage/kaggle/hpa', 'train.csv', folder='train', suffix='.png', create_func=create_image)
         .random_split_by_pct()
         .label_from_df(sep=' ')
