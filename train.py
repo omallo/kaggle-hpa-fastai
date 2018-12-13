@@ -27,7 +27,7 @@ def f1_score(prediction_logits, targets, threshold=0.5):
 
 def f1_score_from_probs(predictions, targets, threshold=0.5):
     binary_predictions = (predictions > threshold).float()
-    return skl_f1_score(targets, binary_predictions, average="macro")
+    return torch.tensor(skl_f1_score(targets, binary_predictions, average="macro")).float()
 
 
 def resnet(type, pretrained, num_classes):
