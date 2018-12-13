@@ -14,8 +14,7 @@ trap archive_artifacts EXIT
 function install_dependencies() {
   apt-get update >/dev/null
 
-  apt-get install software-properties-common python-software-properties >/dev/null
-  add-apt-repository ppa:jonathonf/python-3.6 >/dev/null
+  add-apt-repository ppa:deadsnakes/ppa >/dev/null
   apt-get -y update >/dev/null
   apt-get -y install python3.6 >/dev/null
 
