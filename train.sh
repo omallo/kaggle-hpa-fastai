@@ -21,11 +21,11 @@ function install_dependencies() {
   apt-get -y install libsm-dev libxrender1 libxext6 zip git >/dev/null
   rm -rf /var/lib/apt/lists/*
 
-  pip3 -q install virtualenv
+  pip -q install virtualenv
   virtualenv env --python=python3.6
   . env/bin/activate
 
-  pip3 -q install -r requirements.txt
+  pip -q install -r requirements.txt
 }
 
 function archive_artifacts() {
