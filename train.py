@@ -5,10 +5,10 @@ from torchvision.models import resnet18, resnet34, resnet50
 
 
 def load_image(base_name, image_size):
-    r = load_image_channel("{}_red.png".format(base_name, id), image_size)
-    g = load_image_channel("{}_green.png".format(base_name, id), image_size)
-    b = load_image_channel("{}_blue.png".format(base_name, id), image_size)
-    y = load_image_channel("{}_yellow.png".format(base_name, id), image_size)
+    r = load_image_channel("{}_red.png".format(base_name), image_size)
+    g = load_image_channel("{}_green.png".format(base_name), image_size)
+    b = load_image_channel("{}_blue.png".format(base_name), image_size)
+    y = load_image_channel("{}_yellow.png".format(base_name), image_size)
     return np.stack([r, g, b, y], axis=2)
 
 
