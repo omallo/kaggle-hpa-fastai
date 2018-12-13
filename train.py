@@ -75,3 +75,6 @@ learner = create_cnn(
 # learner = Learner(data, ResNet("resnet18", 28), metrics=accuracy)
 
 learner.fit(1)
+
+learner.unfreeze()
+learner.fit(1)
