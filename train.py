@@ -32,12 +32,11 @@ class F1ScoreCallback(Callback):
         self.targets = []
 
     def on_batch_end(self, last_output, last_target, **kwargs):
-        self.device = last_output.device
         self.prediction_logits.extend(torch.sigmoid(last_output).cpu().data.numpy())
         self.targets.extend(last_target.cpu().data.numpy())
 
     def on_epoch_end(self, **kwargs):
-        self.metric = f1_score(self.prediction_logits, self.targets).to(self.device)
+        self.metric = f1_score(self.prediction_logits, self.targets).item()
 
 
 def focal_loss(input, target, gamma=2.0):
