@@ -133,6 +133,6 @@ learner.fit(1)
 
 learner.unfreeze()
 
-learner.fit(10)
+learner.fit_one_cycle(10)
 
 learner.save('/artifacts/model')
