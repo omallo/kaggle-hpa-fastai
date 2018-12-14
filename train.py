@@ -36,7 +36,7 @@ class F1ScoreCallback(Callback):
         self.targets.extend(last_target.cpu().data.numpy())
 
     def on_epoch_end(self, **kwargs):
-        self.metric = f1_score(self.prediction_logits, self.targets)
+        self.metric = f1_score(torch.tensor(self.prediction_logits), torch.tensor(self.targets))
 
 
 def focal_loss(input, target, gamma=2.0):
