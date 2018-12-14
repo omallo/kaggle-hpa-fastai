@@ -56,7 +56,7 @@ def focal_loss(input, target, gamma=2.0):
 
 
 def calculate_categories(prediction_logits, threshold):
-    return [np.squeeze(np.argwhere(torch.sigmoid(p) > threshold), axis=1) for p in prediction_logits]
+    return [np.squeeze(np.argwhere(torch.sigmoid(p).cpu().data.numpy() > threshold), axis=1) for p in prediction_logits]
 
 
 def create_resnet(type, pretrained, num_classes):
@@ -139,7 +139,7 @@ else:
 
 learner.loss_func = focal_loss
 learner.metrics = [F1Score()]
-learner.path = output_dir
+learner.path = Path(output_dir)
 # learner.to_fp16()
 
 # print(learn.summary)
