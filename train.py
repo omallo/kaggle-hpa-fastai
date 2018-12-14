@@ -111,7 +111,7 @@ tfms = get_transforms(flip_vert=True, xtra_tfms=zoom_crop(scale=(0.8, 1.2), do_r
 data = (
     HpaImageItemList
         .from_csv('/storage/kaggle/hpa', 'train.csv', folder='train', suffix='.png', create_func=create_image)
-        .random_split_by_pct()
+        .random_split_by_pct(valid_pct=0.2, seed=42)
         .label_from_df(sep=' ')
         .transform(tfms)
         .databunch()
@@ -126,6 +126,8 @@ else:
 
 learner.loss_func = focal_loss
 learner.metrics = [F1Score()]
+learner.path = "/artifacts"
+learner.to_fp16()
 
 # print(learn.summary)
 
