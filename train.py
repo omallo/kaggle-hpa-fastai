@@ -123,7 +123,7 @@ learner = create_cnn(
     loss_func=focal_loss,
     metrics=[f1_score, acc])
 
-print(learner.summary)
+# print(learner.summary)
 
 # learner = Learner(data, ResNet("resnet18", 28), metrics=accuracy)
 
