@@ -111,14 +111,14 @@ data = (
 # data.show_batch(rows=3)
 
 if True:
-    learn = create_cnn(
+    learner = create_cnn(
         data,
         lambda pretrained: create_resnet('resnet34', pretrained=pretrained, num_classes=28),
         ps=0.5,
         loss_func=focal_loss,
         metrics=[f1_score])
 else:
-    learn = Learner(
+    learner = Learner(
         data,
         create_senet('seresnext50', num_classes=28),
         loss_func=focal_loss,
@@ -127,12 +127,10 @@ else:
 
 # print(learn.summary)
 
-max_lr = 1e-2
+learner.fit(1)
 
-learn.fit(1, lr=max_lr)
+learner.unfreeze()
 
-learn.unfreeze()
+learner.fit(20)
 
-learn.fit(20, lr=learn.lr_range(slice(max_lr)))
-
-learn.save('/artifacts/model')
+learner.save('/artifacts/model')
