@@ -139,7 +139,7 @@ else:
 
 learner.loss_func = focal_loss
 learner.metrics = [F1Score()]
-learner.path = Path(output_dir)
+# learner.path = Path(output_dir)
 # learner.to_fp16()
 
 # print(learn.summary)
@@ -150,7 +150,7 @@ learner.unfreeze()
 
 learner.fit_one_cycle(1)
 
-learner.save('model')
+learner.save('/{}/model'.format(output_dir))
 
 test_prediction_logits = learner.get_preds(ds_type=DatasetType.Test)
 test_categories = calculate_categories(test_prediction_logits, 0.5)
