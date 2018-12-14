@@ -4,12 +4,15 @@ from fastai.vision import *
 from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
 from sklearn.metrics import f1_score as skl_f1_score
 
+input_dir = '/storage/kaggle/hpa'
+output_dir = '/artifacts'
+
 
 def load_image(base_name, image_size):
-    r = load_image_channel("{}_red.png".format(base_name), image_size)
-    g = load_image_channel("{}_green.png".format(base_name), image_size)
-    b = load_image_channel("{}_blue.png".format(base_name), image_size)
-    y = load_image_channel("{}_yellow.png".format(base_name), image_size)
+    r = load_image_channel('{}_red.png'.format(base_name), image_size)
+    g = load_image_channel('{}_green.png'.format(base_name), image_size)
+    b = load_image_channel('{}_blue.png'.format(base_name), image_size)
+    y = load_image_channel('{}_yellow.png'.format(base_name), image_size)
     return np.stack([r, g, b, y], axis=2)
 
 
@@ -23,7 +26,7 @@ def load_image_channel(file_path, image_size):
 def f1_score(prediction_logits, targets, threshold=0.5):
     predictions = torch.sigmoid(prediction_logits)
     binary_predictions = (predictions > threshold).float()
-    return skl_f1_score(targets, binary_predictions, average="macro")
+    return skl_f1_score(targets, binary_predictions, average='macro')
 
 
 class F1Score(Callback):
@@ -41,7 +44,7 @@ class F1Score(Callback):
 
 def focal_loss(input, target, gamma=2.0):
     assert target.size() == input.size(), \
-        "Target size ({}) must be the same as input size ({})".format(target.size(), input.size())
+        'Target size ({}) must be the same as input size ({})'.format(target.size(), input.size())
 
     max_val = (-input).clamp(min=0)
     loss = input - input * target + max_val + ((-max_val).exp() + (-input - max_val).exp()).log()
@@ -52,18 +55,22 @@ def focal_loss(input, target, gamma=2.0):
     return loss.sum(dim=1).mean()
 
 
+def calculate_categories(prediction_logits, threshold):
+    return [np.squeeze(np.argwhere(torch.sigmoid(p) > threshold), axis=1) for p in prediction_logits]
+
+
 def create_resnet(type, pretrained, num_classes):
-    if type == "resnet18":
+    if type == 'resnet18':
         model = models.resnet18(pretrained=pretrained)
         num_fc_in_channels = 512
-    elif type == "resnet34":
+    elif type == 'resnet34':
         model = models.resnet34(pretrained=pretrained)
         num_fc_in_channels = 512
-    elif type == "resnet50":
+    elif type == 'resnet50':
         model = models.resnet50(pretrained=pretrained)
         num_fc_in_channels = 2048
     else:
-        raise Exception("Unsupported model model type: '{}".format(type))
+        raise Exception('Unsupported model model type: "{}"'.format(type))
 
     conv1 = nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3, bias=False)
     conv1.weight.data[:, 0:3, :, :] = model.conv1.weight.data
@@ -77,14 +84,14 @@ def create_resnet(type, pretrained, num_classes):
 
 
 def create_senet(type, num_classes):
-    if type == "seresnext50":
-        model = se_resnext50_32x4d(pretrained="imagenet")
+    if type == 'seresnext50':
+        model = se_resnext50_32x4d(pretrained='imagenet')
         conv1 = nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3, bias=False)
-    elif type == "senet154":
-        model = senet154(pretrained="imagenet")
+    elif type == 'senet154':
+        model = senet154(pretrained='imagenet')
         conv1 = nn.Conv2d(4, 64, 3, stride=2, padding=1, bias=False)
     else:
-        raise Exception("Unsupported model model type: '{}".format(type))
+        raise Exception('Unsupported model model type: ''{}'''.format(type))
 
     senet_layer0_children = list(model.layer0.children())
     conv1.weight.data[:, 0:3, :, :] = senet_layer0_children[0].weight.data
@@ -98,7 +105,7 @@ def create_senet(type, num_classes):
 
 
 def create_image(fn):
-    return Image(pil2tensor(PIL.Image.fromarray(load_image(fn[:-4], 256)), np.float32) / 255.)
+    return Image(pil2tensor(PIL.Image.fromarray(load_image(fn, 256)), np.float32) / 255.)
 
 
 class HpaImageItemList(ImageItemList):
@@ -108,12 +115,18 @@ class HpaImageItemList(ImageItemList):
 
 tfms = get_transforms(flip_vert=True, xtra_tfms=zoom_crop(scale=(0.8, 1.2), do_rand=True))
 
+test_images = (
+    HpaImageItemList
+        .from_csv(input_dir, 'sample_submission.csv', folder='test', create_func=create_image)
+)
+
 data = (
     HpaImageItemList
-        .from_csv('/storage/kaggle/hpa', 'train.csv', folder='train', suffix='.png', create_func=create_image)
+        .from_csv(input_dir, 'train.csv', folder='train', create_func=create_image)
         .random_split_by_pct(valid_pct=0.2, seed=42)
         .label_from_df(sep=' ')
         .transform(tfms)
+        .add_test(test_images)
         .databunch()
 )
 
@@ -126,8 +139,8 @@ else:
 
 learner.loss_func = focal_loss
 learner.metrics = [F1Score()]
-learner.path = "/artifacts"
-learner.to_fp16()
+learner.path = output_dir
+# learner.to_fp16()
 
 # print(learn.summary)
 
@@ -135,6 +148,13 @@ learner.fit(1)
 
 learner.unfreeze()
 
-learner.fit_one_cycle(10)
+learner.fit_one_cycle(1)
 
-learner.save('/artifacts/model')
+learner.save('/{}/model'.format(output_dir))
+
+test_prediction_logits, _ = learner.get_preds(ds_type=DatasetType.Test)
+test_categories = calculate_categories(test_prediction_logits, 0.5)
+
+submission_df = pd.read_csv('{}/sample_submission.csv', index_col='Id')
+submission_df["Predicted"] = [" ".join(map(str, c)) for c in test_categories]
+submission_df.to_csv("{}/submission.csv".format(output_dir))
