@@ -153,7 +153,7 @@ learner.fit_one_cycle(1)
 learner.save('/{}/model'.format(output_dir))
 
 test_prediction_logits = learner.get_preds(ds_type=DatasetType.Test)
-print(test_prediction_logits.shape)
+print(test_prediction_logits[0].shape)
 print(test_prediction_logits[0])
 test_categories = calculate_categories(test_prediction_logits, 0.5)
 
