@@ -26,13 +26,13 @@ def f1_score(prediction_logits, targets, threshold=0.5):
     return skl_f1_score(targets, binary_predictions, average="macro")
 
 
-class F1ScoreCallback(Callback):
+class F1Score(Callback):
     def on_epoch_begin(self, **kwargs):
         self.prediction_logits = []
         self.targets = []
 
     def on_batch_end(self, last_output, last_target, **kwargs):
-        self.prediction_logits.extend(torch.sigmoid(last_output).cpu().data.numpy())
+        self.prediction_logits.extend(last_output.cpu().data.numpy())
         self.targets.extend(last_target.cpu().data.numpy())
 
     def on_epoch_end(self, **kwargs):
@@ -125,13 +125,13 @@ if True:
         lambda pretrained: create_resnet('resnet34', pretrained=pretrained, num_classes=28),
         ps=0.5,
         loss_func=focal_loss,
-        metrics=[F1ScoreCallback()])
+        metrics=[F1Score()])
 else:
     learner = Learner(
         data,
         create_senet('seresnext50', num_classes=28),
         loss_func=focal_loss,
-        metrics=[F1ScoreCallback()]
+        metrics=[F1Score()]
     )
 
 # print(learn.summary)
@@ -140,6 +140,6 @@ learner.fit(1)
 
 learner.unfreeze()
 
-learner.fit(20)
+learner.fit(10)
 
 learner.save('/artifacts/model')
