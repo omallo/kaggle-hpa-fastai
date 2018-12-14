@@ -117,6 +117,13 @@ learner = create_cnn(
     loss_func=focal_loss,
     metrics=[f1_score])
 
+# learner = Learner(
+#     data,
+#     create_senet('seresnext50', num_classes=28),
+#     loss_func=focal_loss,
+#     metrics=[f1_score]
+# )
+
 # print(learner.summary)
 
 # learner = Learner(data, ResNet("resnet18", 28), metrics=accuracy)
