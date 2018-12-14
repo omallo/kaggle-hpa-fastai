@@ -23,7 +23,7 @@ def load_image_channel(file_path, image_size):
 def f1_score(prediction_logits, targets, threshold=0.5):
     predictions = torch.sigmoid(prediction_logits)
     binary_predictions = (predictions > threshold).float()
-    return torch.tensor(skl_f1_score(targets, binary_predictions, average="macro")).float().to(predictions.device)
+    return skl_f1_score(targets, binary_predictions, average="macro")
 
 
 class F1ScoreCallback(Callback):
@@ -36,7 +36,7 @@ class F1ScoreCallback(Callback):
         self.targets.extend(last_target.cpu().data.numpy())
 
     def on_epoch_end(self, **kwargs):
-        self.metric = f1_score(self.prediction_logits, self.targets).item()
+        self.metric = f1_score(self.prediction_logits, self.targets)
 
 
 def focal_loss(input, target, gamma=2.0):
@@ -125,7 +125,7 @@ if True:
         lambda pretrained: create_resnet('resnet34', pretrained=pretrained, num_classes=28),
         ps=0.5,
         loss_func=focal_loss,
-        metrics=[f1_score])
+        metrics=[F1ScoreCallback()])
 else:
     learner = Learner(
         data,
