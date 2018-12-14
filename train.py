@@ -1,6 +1,7 @@
 import cv2
 from fastai import *
 from fastai.vision import *
+from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
 from sklearn.metrics import f1_score as skl_f1_score
 
 
@@ -48,28 +49,49 @@ def focal_loss(input, target, gamma=2.0):
     return loss.sum(dim=1).mean()
 
 
-def resnet(type, pretrained, num_classes):
+def create_resnet(type, pretrained, num_classes):
     if type == "resnet18":
-        resnet = models.resnet18(pretrained=pretrained)
+        model = models.resnet18(pretrained=pretrained)
         num_fc_in_channels = 512
     elif type == "resnet34":
-        resnet = models.resnet34(pretrained=pretrained)
+        model = models.resnet34(pretrained=pretrained)
         num_fc_in_channels = 512
     elif type == "resnet50":
-        resnet = models.resnet50(pretrained=pretrained)
+        model = models.resnet50(pretrained=pretrained)
         num_fc_in_channels = 2048
     else:
-        raise Exception("Unsupported resnet model type: '{}".format(type))
+        raise Exception("Unsupported model model type: '{}".format(type))
 
     conv1 = nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3, bias=False)
-    conv1.weight.data[:, 0:3, :, :] = resnet.conv1.weight.data
-    conv1.weight.data[:, 3, :, :] = resnet.conv1.weight.data[:, 0, :, :].clone()
-    resnet.conv1 = conv1
+    conv1.weight.data[:, 0:3, :, :] = model.conv1.weight.data
+    conv1.weight.data[:, 3, :, :] = model.conv1.weight.data[:, 0, :, :].clone()
+    model.conv1 = conv1
 
-    resnet.avgpool = nn.AdaptiveAvgPool2d(output_size=1)
-    resnet.fc = nn.Linear(num_fc_in_channels, num_classes)
+    model.avgpool = nn.AdaptiveAvgPool2d(output_size=1)
+    model.fc = nn.Linear(num_fc_in_channels, num_classes)
 
-    return resnet
+    return model
+
+
+def create_senet(type, num_classes):
+    if type == "seresnext50":
+        model = se_resnext50_32x4d(pretrained="imagenet")
+        conv1 = nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3, bias=False)
+    elif type == "senet154":
+        model = senet154(pretrained="imagenet")
+        conv1 = nn.Conv2d(4, 64, 3, stride=2, padding=1, bias=False)
+    else:
+        raise Exception("Unsupported model model type: '{}".format(type))
+
+    senet_layer0_children = list(model.layer0.children())
+    conv1.weight.data[:, 0:3, :, :] = senet_layer0_children[0].weight.data
+    model.layer0 = nn.Sequential(*([conv1] + senet_layer0_children[1:]))
+
+    model.avg_pool = nn.AdaptiveAvgPool2d(output_size=1)
+    model.dropout = nn.Dropout(0.5)
+    model.last_linear = nn.Linear(2048, num_classes)
+
+    return model
 
 
 def create_image(fn):
@@ -96,12 +118,12 @@ data.show_batch(rows=3)
 
 learner = create_cnn(
     data,
-    lambda pretrained: resnet('resnet34', pretrained=pretrained, num_classes=28),
+    lambda pretrained: create_resnet('resnet34', pretrained=pretrained, num_classes=28),
     ps=0.5,
     loss_func=focal_loss,
     metrics=[f1_score, acc])
 
-# print(learner.summary)
+print(learner.summary)
 
 # learner = Learner(data, ResNet("resnet18", 28), metrics=accuracy)
 

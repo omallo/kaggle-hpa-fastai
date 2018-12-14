@@ -1,5 +1,6 @@
 fastai==1.0.36.post1
 opencv-python==3.4.3.18
+pretrainedmodels==0.7.4
 scikit_learn==0.19.2
 torch==1.0.0
 torchvision==0.2.1
