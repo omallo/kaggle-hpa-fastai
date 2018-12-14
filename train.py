@@ -132,6 +132,6 @@ learner.fit(1)
 learner.unfreeze()
 
 # learner.fit(10, lr=learner.lr_range(slice(1e-2)))
-learner.fit(5)
+learner.fit(20)
 
 learner.save('/artifacts/model')
