@@ -114,7 +114,7 @@ data = (
         .databunch()
 )
 
-data.show_batch(rows=3)
+# data.show_batch(rows=3)
 
 learner = create_cnn(
     data,
