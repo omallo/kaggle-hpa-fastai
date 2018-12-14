@@ -30,12 +30,6 @@ def f1_score_from_probs(predictions, targets, threshold=0.5):
     return torch.tensor(skl_f1_score(targets, binary_predictions, average="macro")).float().to(predictions.device)
 
 
-def acc(preds, targs, thresh=0.0):
-    preds = (preds > thresh).int()
-    targs = targs.int()
-    return (preds == targs).float().mean()
-
-
 def focal_loss(input, target, gamma=2.0):
     assert target.size() == input.size(), \
         "Target size ({}) must be the same as input size ({})".format(target.size(), input.size())
@@ -121,7 +115,7 @@ learner = create_cnn(
     lambda pretrained: create_resnet('resnet34', pretrained=pretrained, num_classes=28),
     ps=0.5,
     loss_func=focal_loss,
-    metrics=[f1_score, acc])
+    metrics=[f1_score])
 
 # print(learner.summary)
 
