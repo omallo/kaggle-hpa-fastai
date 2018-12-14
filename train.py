@@ -110,19 +110,20 @@ data = (
 
 # data.show_batch(rows=3)
 
-learner = create_cnn(
-    data,
-    lambda pretrained: create_resnet('resnet34', pretrained=pretrained, num_classes=28),
-    ps=0.5,
-    loss_func=focal_loss,
-    metrics=[f1_score])
-
-# learner = Learner(
-#     data,
-#     create_senet('seresnext50', num_classes=28),
-#     loss_func=focal_loss,
-#     metrics=[f1_score]
-# )
+if False:
+    learner = create_cnn(
+        data,
+        lambda pretrained: create_resnet('resnet34', pretrained=pretrained, num_classes=28),
+        ps=0.5,
+        loss_func=focal_loss,
+        metrics=[f1_score])
+else:
+    learner = Learner(
+        data,
+        create_senet('seresnext50', num_classes=28),
+        loss_func=focal_loss,
+        metrics=[f1_score]
+    )
 
 # print(learner.summary)
 
