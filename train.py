@@ -22,12 +22,22 @@ def load_image_channel(file_path, image_size):
 
 def f1_score(prediction_logits, targets, threshold=0.5):
     predictions = torch.sigmoid(prediction_logits)
-    return f1_score_from_probs(predictions, targets, threshold)
-
-
-def f1_score_from_probs(predictions, targets, threshold=0.5):
     binary_predictions = (predictions > threshold).float()
     return torch.tensor(skl_f1_score(targets, binary_predictions, average="macro")).float().to(predictions.device)
+
+
+class F1ScoreCallback(Callback):
+    def on_epoch_begin(self, **kwargs):
+        self.prediction_logits = []
+        self.targets = []
+
+    def on_batch_end(self, last_output, last_target, **kwargs):
+        self.device = last_output.device
+        self.prediction_logits.extend(torch.sigmoid(last_output).cpu().data.numpy())
+        self.targets.extend(last_target.cpu().data.numpy())
+
+    def on_epoch_end(self, **kwargs):
+        self.metric = f1_score(self.prediction_logits, self.targets).to(self.device)
 
 
 def focal_loss(input, target, gamma=2.0):
@@ -122,7 +132,7 @@ else:
         data,
         create_senet('seresnext50', num_classes=28),
         loss_func=focal_loss,
-        metrics=[f1_score]
+        metrics=[F1ScoreCallback()]
     )
 
 # print(learn.summary)
