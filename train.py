@@ -110,7 +110,7 @@ data = (
 
 # data.show_batch(rows=3)
 
-if True:
+if False:
     learner = create_cnn(
         data,
         lambda pretrained: create_resnet('resnet34', pretrained=pretrained, num_classes=28),
