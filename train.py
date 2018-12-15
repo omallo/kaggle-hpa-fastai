@@ -155,6 +155,6 @@ learner.save('/{}/model'.format(output_dir))
 test_prediction_logits = learner.get_preds(ds_type=DatasetType.Test)
 test_categories = calculate_categories(test_prediction_logits, 0.5)
 
-submission_df = pd.read_csv('{}/sample_submission.csv', index_col='Id')
+submission_df = pd.read_csv('{}/sample_submission.csv'.format(input_dir), index_col='Id')
 submission_df['Predicted'] = [' '.join(map(str, c)) for c in test_categories]
 submission_df.to_csv('{}/submission.csv'.format(output_dir))
