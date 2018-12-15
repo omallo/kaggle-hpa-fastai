@@ -56,11 +56,14 @@ def focal_loss(input, target, gamma=2.0):
 
 
 def one_hot_to_categories(one_hot_categories):
-    return [np.squeeze(np.argwhere(p == 1)) for p in one_hot_categories]
+    one_hot_categories_np = one_hot_categories.cpu().data.numpy()
+    return [np.squeeze(np.argwhere(p == 1)) for p in one_hot_categories_np]
 
 
 def calculate_categories(prediction_logits, threshold):
-    return [np.squeeze(np.argwhere(torch.sigmoid(p) > threshold), axis=1) for p in prediction_logits]
+    predictions = torch.sigmoid(prediction_logits)
+    predictions_np = predictions.cpu().data.numpy()
+    return [np.squeeze(np.argwhere(p > threshold), axis=1) for p in predictions_np]
 
 
 def calculate_best_threshold(prediction_logits, targets):
