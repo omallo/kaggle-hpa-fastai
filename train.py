@@ -165,7 +165,7 @@ learner.loss_func = focal_loss
 learner.metrics = [F1Score()]
 learner.callbacks = [
     EarlyStoppingCallback(learner, monitor='f1_score', mode='max', patience=5, min_delta=1e-3),
-    SaveModelCallback(learner, monitor='f1_score', mode='max')
+    # SaveModelCallback(learner, monitor='f1_score', mode='max')
 ]
 
 # print(learner.summary)
