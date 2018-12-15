@@ -169,6 +169,8 @@ learn.callbacks = [
     SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
 ]
 
+os.mkdir(learn.path / learn.model_dir)
+
 # print(learn.summary)
 
 learn.fit(1)
