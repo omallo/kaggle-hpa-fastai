@@ -55,8 +55,8 @@ def focal_loss(input, target, gamma=2.0):
     return loss.sum(dim=1).mean()
 
 
-def calculate_categories(prediction_logits, threshold):
-    return [np.squeeze(np.argwhere(torch.sigmoid(p).cpu().data.numpy() > threshold)) for p in prediction_logits]
+def one_hot_to_categories(one_hot_categories):
+    return [np.squeeze(np.argwhere(p == 1)) for p in one_hot_categories]
 
 
 def create_resnet(type, pretrained, num_classes):
@@ -152,9 +152,9 @@ learner.fit_one_cycle(1)
 
 learner.save('/{}/model'.format(output_dir))
 
-test_prediction_logits = learner.get_preds(ds_type=DatasetType.Test)
-test_categories = calculate_categories(test_prediction_logits, 0.5)
+test_prediction_logits, test_prediction_categories_one_hot = learner.get_preds(ds_type=DatasetType.Test)
+test_prediction_categories = one_hot_to_categories(test_prediction_logits)
 
-submission_df = pd.read_csv('{}/sample_submission.csv'.format(input_dir), index_col='Id')
-submission_df['Predicted'] = [' '.join(map(str, c)) for c in test_categories]
+submission_df = pd.read_csv('{}/sample_submission.csv'.format(input_dir), index_col='Id', usecols=['Id'])
+submission_df['Predicted'] = [' '.join(map(str, c)) for c in test_prediction_categories]
 submission_df.to_csv('{}/submission.csv'.format(output_dir))
