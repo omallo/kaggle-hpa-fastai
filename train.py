@@ -56,7 +56,7 @@ def focal_loss(input, target, gamma=2.0):
 
 
 def calculate_categories(prediction_logits, threshold):
-    return [np.squeeze(np.argwhere(torch.sigmoid(p).cpu().data.numpy() > threshold), axis=1) for p in prediction_logits]
+    return [np.squeeze(np.argwhere(torch.sigmoid(p).cpu().data.numpy() > threshold)) for p in prediction_logits]
 
 
 def create_resnet(type, pretrained, num_classes):
@@ -153,8 +153,6 @@ learner.fit_one_cycle(1)
 learner.save('/{}/model'.format(output_dir))
 
 test_prediction_logits = learner.get_preds(ds_type=DatasetType.Test)
-print(test_prediction_logits[0].shape)
-print(test_prediction_logits[0])
 test_categories = calculate_categories(test_prediction_logits, 0.5)
 
 submission_df = pd.read_csv('{}/sample_submission.csv', index_col='Id')
