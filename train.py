@@ -165,7 +165,7 @@ learn.loss_func = focal_loss
 learn.metrics = [F1Score()]
 learn.callbacks = [
     EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=5, min_delta=1e-3),
-    # SaveModelCallback(learn, monitor='f1_score', mode='max')
+    SaveModelCallback(learn, monitor='f1_score', mode='max')
 ]
 
 # print(learn.summary)
@@ -173,8 +173,6 @@ learn.callbacks = [
 learn.fit(1)
 learn.unfreeze()
 learn.fit_one_cycle(20)
-
-learn.save('/{}/model'.format(output_dir))
 
 valid_prediction_logits, valid_prediction_categories_one_hot = learn.get_preds(ds_type=DatasetType.Valid)
 best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
