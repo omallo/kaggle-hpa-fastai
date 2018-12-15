@@ -156,31 +156,31 @@ data = (
 # data.show_batch(rows=3)
 
 if True:
-    learner = create_cnn(data, lambda pretrained: create_resnet('resnet34', pretrained, num_classes=28), ps=0.5)
+    learn = create_cnn(data, lambda pretrained: create_resnet('resnet34', pretrained, num_classes=28), ps=0.5)
 else:
-    learner = Learner(data, create_senet('seresnext50', num_classes=28))
+    learn = Learner(data, create_senet('seresnext50', num_classes=28))
 
-learner.path = Path(output_dir)
-learner.loss_func = focal_loss
-learner.metrics = [F1Score()]
-learner.callbacks = [
-    EarlyStoppingCallback(learner, monitor='f1_score', mode='max', patience=5, min_delta=1e-3),
-    # SaveModelCallback(learner, monitor='f1_score', mode='max')
+learn.path = Path(output_dir)
+learn.loss_func = focal_loss
+learn.metrics = [F1Score()]
+learn.callbacks = [
+    EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=5, min_delta=1e-3),
+    # SaveModelCallback(learn, monitor='f1_score', mode='max')
 ]
 
-# print(learner.summary)
+# print(learn.summary)
 
-learner.fit(1)
-learner.unfreeze()
-learner.fit_one_cycle(20)
+learn.fit(1)
+learn.unfreeze()
+learn.fit_one_cycle(20)
 
-learner.save('/{}/model'.format(output_dir))
+learn.save('/{}/model'.format(output_dir))
 
-valid_prediction_logits, valid_prediction_categories_one_hot = learner.get_preds(ds_type=DatasetType.Valid)
+valid_prediction_logits, valid_prediction_categories_one_hot = learn.get_preds(ds_type=DatasetType.Valid)
 best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
 print('best threshold / score: {:.3f} / {:.3f}'.format(best_threshold, best_score))
 
-test_prediction_logits, test_prediction_categories_one_hot = learner.get_preds(ds_type=DatasetType.Test)
+test_prediction_logits, test_prediction_categories_one_hot = learn.get_preds(ds_type=DatasetType.Test)
 
 test_prediction_categories = one_hot_to_categories(test_prediction_categories_one_hot)
 write_submission(test_prediction_categories, '{}/submission_fastai.csv'.format(output_dir))
