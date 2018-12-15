@@ -175,7 +175,7 @@ learn.load('model_best_f1')
 
 # print(learn.summary)
 
-learn.fit(1)
+# learn.fit(1)
 learn.unfreeze()
 learn.fit_one_cycle(20)
 
