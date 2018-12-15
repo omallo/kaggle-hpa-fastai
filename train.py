@@ -1,5 +1,6 @@
 import cv2
 from fastai import *
+from fastai.callbacks import *
 from fastai.vision import *
 from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
 from sklearn.metrics import f1_score as skl_f1_score
@@ -161,16 +162,15 @@ else:
 
 learner.loss_func = focal_loss
 learner.metrics = [F1Score()]
+learner.callbacks = [EarlyStoppingCallback(learner, monitor='f1_score', patience=5, min_delta=1e-3)]
 # learner.path = Path(output_dir)
 # learner.to_fp16()
 
 # print(learn.summary)
 
 learner.fit(1)
-
 learner.unfreeze()
-
-learner.fit_one_cycle(1)
+learner.fit_one_cycle(20)
 
 learner.save('/{}/model'.format(output_dir))
 
