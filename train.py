@@ -153,7 +153,7 @@ learner.fit_one_cycle(1)
 learner.save('/{}/model'.format(output_dir))
 
 test_prediction_logits, test_prediction_categories_one_hot = learner.get_preds(ds_type=DatasetType.Test)
-test_prediction_categories = one_hot_to_categories(test_prediction_logits)
+test_prediction_categories = one_hot_to_categories(test_prediction_categories_one_hot)
 
 submission_df = pd.read_csv('{}/sample_submission.csv'.format(input_dir), index_col='Id', usecols=['Id'])
 submission_df['Predicted'] = [' '.join(map(str, c)) for c in test_prediction_categories]
