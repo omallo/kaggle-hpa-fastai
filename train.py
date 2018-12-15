@@ -175,6 +175,8 @@ learn.fit(1)
 learn.unfreeze()
 learn.fit_one_cycle(20)
 
+learn.load('model_best_f1')
+
 valid_prediction_logits, valid_prediction_categories_one_hot = learn.get_preds(ds_type=DatasetType.Valid)
 best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
 print('best threshold / score: {:.3f} / {:.3f}'.format(best_threshold, best_score))
