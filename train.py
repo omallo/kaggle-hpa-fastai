@@ -155,21 +155,19 @@ data = (
 
 # data.show_batch(rows=3)
 
-if True:
-    learn = create_cnn(data, lambda pretrained: create_resnet('resnet34', pretrained, num_classes=28), ps=0.5)
-else:
-    learn = Learner(data, create_senet('seresnext50', num_classes=28))
+learn = create_cnn(
+    data,
+    lambda pretrained: create_resnet('resnet34', pretrained, num_classes=28),
+    ps=0.5,
+    path=Path(output_dir),
+    loss_func=focal_loss,
+    metrics=[F1Score()])
 
-learn.path = Path(output_dir)
-learn.loss_func = focal_loss
-learn.metrics = [F1Score()]
 learn.callbacks = [
     EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=5, min_delta=1e-3),
     SaveModelCallback(learn, monitor='val_loss', mode='min', name='model_best_loss'),
     SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
 ]
-
-os.mkdir(learn.path / learn.model_dir)
 
 # print(learn.summary)
 
