@@ -59,6 +59,19 @@ def one_hot_to_categories(one_hot_categories):
     return [np.squeeze(np.argwhere(p == 1)) for p in one_hot_categories]
 
 
+def calculate_categories(prediction_logits, threshold):
+    return [np.squeeze(np.argwhere(torch.sigmoid(p) > threshold), axis=1) for p in prediction_logits]
+
+
+def calculate_best_threshold(prediction_logits, targets):
+    thresholds = np.linspace(0, 1, 51)
+    scores = [f1_score(prediction_logits, targets, threshold=t) for t in thresholds]
+
+    best_score_index = np.argmax(scores)
+
+    return thresholds[best_score_index], scores[best_score_index], scores
+
+
 def create_resnet(type, pretrained, num_classes):
     if type == 'resnet18':
         model = models.resnet18(pretrained=pretrained)
@@ -108,6 +121,12 @@ def create_image(fn):
     return Image(pil2tensor(PIL.Image.fromarray(load_image(fn, 256)), np.float32) / 255.)
 
 
+def write_submission(prediction_categories, filename):
+    submission_df = pd.read_csv('{}/sample_submission.csv'.format(input_dir), index_col='Id', usecols=['Id'])
+    submission_df['Predicted'] = [' '.join(map(str, c)) for c in prediction_categories]
+    submission_df.to_csv(filename)
+
+
 class HpaImageItemList(ImageItemList):
     def open(self, fn):
         return create_image(fn)
@@ -152,9 +171,17 @@ learner.fit_one_cycle(1)
 
 learner.save('/{}/model'.format(output_dir))
 
-test_prediction_logits, test_prediction_categories_one_hot = learner.get_preds(ds_type=DatasetType.Test)
-test_prediction_categories = one_hot_to_categories(test_prediction_categories_one_hot)
+valid_prediction_logits, valid_prediction_categories_one_hot = learner.get_preds(ds_type=DatasetType.Valid)
+best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
+print('best threshold / score: {:.3f} / {:.3f}'.format(best_threshold, best_score))
 
-submission_df = pd.read_csv('{}/sample_submission.csv'.format(input_dir), index_col='Id', usecols=['Id'])
-submission_df['Predicted'] = [' '.join(map(str, c)) for c in test_prediction_categories]
-submission_df.to_csv('{}/submission.csv'.format(output_dir))
+test_prediction_logits, test_prediction_categories_one_hot = learner.get_preds(ds_type=DatasetType.Test)
+
+test_prediction_categories = one_hot_to_categories(test_prediction_categories_one_hot)
+write_submission(test_prediction_categories, '{}/submission_fastai.csv'.format(output_dir))
+
+test_prediction_categories = calculate_categories(test_prediction_logits, 0.5)
+write_submission(test_prediction_categories, '{}/submission_0.5.csv'.format(output_dir))
+
+test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
+write_submission(test_prediction_categories, '{}/submission_best.csv'.format(output_dir))
