@@ -152,7 +152,7 @@ data = (
         .label_from_df(sep=' ')
         .transform(tfms)
         .add_test(test_images)
-        .databunch()
+        .databunch(bs=64, num_workers=8)
 )
 
 # data.show_batch(rows=3)
@@ -175,9 +175,13 @@ learn.callbacks = [
 
 # print(learn.summary)
 
-learn.fit(1)
+# learn.lr_find()
+# learn.recorder.plot()
+
+lr = 4e-2
+learn.fit(1, lr=lr)
 learn.unfreeze()
-learn.fit_one_cycle(50)
+learn.fit_one_cycle(50, max_lr=learn.lr_range(slice(lr)))
 
 learn.load('model_best_f1')
 
