@@ -189,6 +189,10 @@ test_prediction_logits, _ = learn.get_preds(ds_type=DatasetType.Test)
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
 write_submission(test_prediction_categories, '{}/submission.csv'.format(output_dir))
 
+valid_prediction_logits, valid_prediction_categories_one_hot = learn.TTA(ds_type=DatasetType.Valid)
+best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
+print('best threshold / score: {:.3f} / {:.3f}'.format(best_threshold, best_score))
+
 test_prediction_logits, _ = learn.TTA(ds_type=DatasetType.Test)
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
 write_submission(test_prediction_categories, '{}/submission_tta.csv'.format(output_dir))
