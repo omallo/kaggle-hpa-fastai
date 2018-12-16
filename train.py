@@ -136,7 +136,7 @@ class HpaImageItemList(ImageItemList):
         return create_image(fn)
 
 
-shutil.copytree('/storage/models/hpa/fastai/models', '{}/models'.format(output_dir))
+# shutil.copytree('/storage/models/hpa/fastai/models', '{}/models'.format(output_dir))
 
 tfms = get_transforms(flip_vert=True, xtra_tfms=zoom_crop(scale=(0.8, 1.2), do_rand=True))
 
@@ -171,13 +171,13 @@ learn.callbacks = [
     SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
 ]
 
-learn.load('model_best_f1')
+# learn.load('model_best_f1')
 
 # print(learn.summary)
 
-# learn.fit(1)
+learn.fit(1)
 learn.unfreeze()
-learn.fit_one_cycle(20)
+learn.fit_one_cycle(50)
 
 learn.load('model_best_f1')
 
