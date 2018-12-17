@@ -138,6 +138,7 @@ class HpaImageItemList(ImageItemList):
 
 # shutil.copytree('/storage/models/hpa/fastai/models', '{}/models'.format(output_dir))
 
+protein_stats = ([0.08069, 0.05258, 0.05487, 0.08282], [0.13704, 0.10145, 0.15313, 0.13814])
 tfms = get_transforms(flip_vert=True, xtra_tfms=zoom_crop(scale=(0.8, 1.2), do_rand=True))
 
 test_images = (
@@ -149,11 +150,12 @@ data = (
     HpaImageItemList
         .from_csv(input_dir, 'train.csv', folder='train', create_func=create_image)
         .random_split_by_pct(valid_pct=0.2, seed=42)
-        .label_from_df(sep=' ')
-        # .transform(tfms)
-        .add_test(test_images)
+        .label_from_df(sep=' ', classes=np.arange(28))
+        .transform(tfms)
+        .add_test(test_images, label='0')
         # .databunch(bs=64, num_workers=8)
-        .databunch()
+        .databunch(bs=64)
+        .normalize(protein_stats)
 )
 
 # data.show_batch(rows=3)
