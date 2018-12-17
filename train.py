@@ -100,6 +100,10 @@ def create_resnet(type, pretrained, num_classes):
     return model
 
 
+def resnet_split(m):
+    return (m[0][6], m[1])
+
+
 def create_senet(type, num_classes):
     if type == 'seresnext50':
         model = se_resnext50_32x4d(pretrained='imagenet')
@@ -161,10 +165,12 @@ data = (
 
 # data.show_batch(rows=3)
 
+
 learn = create_cnn(
     data,
     lambda pretrained: create_resnet('resnet34', pretrained, num_classes=28),
     ps=0.5,
+    # split_on=resnet_split,
     path=Path(output_dir),
     loss_func=focal_loss,
     metrics=[F1Score()])
