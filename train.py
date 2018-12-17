@@ -150,7 +150,7 @@ data = (
         .from_csv(input_dir, 'train.csv', folder='train', create_func=create_image)
         .random_split_by_pct(valid_pct=0.2, seed=42)
         .label_from_df(sep=' ')
-        .transform(tfms)
+        # .transform(tfms)
         .add_test(test_images)
         .databunch(bs=64, num_workers=8)
 )
@@ -182,7 +182,7 @@ lr = 4e-2
 learn.fit(1, lr=lr)
 learn.unfreeze()
 # learn.fit_one_cycle(20, max_lr=learn.lr_range(slice(lr)))
-learn.fit_one_cycle(20, max_lr=lr)
+learn.fit_one_cycle(10, max_lr=lr)
 
 learn.load('model_best_f1')
 
