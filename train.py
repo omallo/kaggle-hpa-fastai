@@ -150,9 +150,9 @@ data = (
     HpaImageItemList
         .from_csv(input_dir, 'train.csv', folder='train', create_func=create_image)
         .random_split_by_pct(valid_pct=0.2, seed=42)
-        .label_from_df(sep=' ', classes=np.arange(28))
+        .label_from_df(sep=' ', classes=[str(i) for i in range(28)])
         .transform(tfms)
-        .add_test(test_images, label='0')
+        .add_test(test_images)
         # .databunch(bs=64, num_workers=8)
         .databunch(bs=64)
         .normalize(protein_stats)
