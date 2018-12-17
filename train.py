@@ -149,7 +149,7 @@ test_images = (
 data = (
     HpaImageItemList
         .from_csv(input_dir, 'train.csv', folder='train', create_func=create_image)
-        .use_partial_data(sample_pct=0.2, seed=42)
+        # .use_partial_data(sample_pct=0.2, seed=42)
         .random_split_by_pct(valid_pct=0.2, seed=42)
         .label_from_df(sep=' ', classes=[str(i) for i in range(28)])
         .transform(tfms)
