@@ -152,7 +152,8 @@ data = (
         .label_from_df(sep=' ')
         # .transform(tfms)
         .add_test(test_images)
-        .databunch(bs=64, num_workers=8)
+        # .databunch(bs=64, num_workers=8)
+        .databunch()
 )
 
 # data.show_batch(rows=3)
