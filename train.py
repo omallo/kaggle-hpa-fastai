@@ -126,7 +126,7 @@ def create_senet(type, num_classes):
 
 
 def create_image(fn):
-    return Image(pil2tensor(PIL.Image.fromarray(load_image(fn, 256)), np.float32) / 255.)
+    return Image(pil2tensor(PIL.Image.fromarray(load_image(fn, 512)), np.float32) / 255.)
 
 
 def write_submission(prediction_categories, filename):
@@ -192,7 +192,7 @@ lr = 4e-2
 learn.fit(1)
 learn.unfreeze()
 # learn.fit_one_cycle(20, max_lr=learn.lr_range(slice(lr)))
-learn.fit_one_cycle(30)
+learn.fit_one_cycle(50)
 
 learn.load('model_best_f1')
 
