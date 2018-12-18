@@ -65,7 +65,7 @@ class PaperspaceLrLogger(LearnerCallback):
     def on_batch_begin(self, train, **kwargs):
         if train:
             self.batch += 1
-            print('{"chart": "lr", "x": %d, "y": %.4f' % (self.batch, self.learn.opt.lr))
+            print('{"chart": "lr", "x": %d, "y": %.4f}' % (self.batch, self.learn.opt.lr))
 
 
 def one_hot_to_categories(one_hot_categories):
