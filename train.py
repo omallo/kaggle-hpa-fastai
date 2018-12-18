@@ -2,7 +2,6 @@ import cv2
 from fastai import *
 from fastai.callbacks import *
 from fastai.vision import *
-from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
 from sklearn.metrics import f1_score as skl_f1_score
 
 input_dir = '/storage/kaggle/hpa'
@@ -118,27 +117,6 @@ def resnet34(pretrained):
 
 def resnet_split(m):
     return (m[0][6], m[1])
-
-
-def create_senet(type, num_classes):
-    if type == 'seresnext50':
-        model = se_resnext50_32x4d(pretrained='imagenet')
-        conv1 = nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3, bias=False)
-    elif type == 'senet154':
-        model = senet154(pretrained='imagenet')
-        conv1 = nn.Conv2d(4, 64, 3, stride=2, padding=1, bias=False)
-    else:
-        raise Exception('Unsupported model model type: ''{}'''.format(type))
-
-    senet_layer0_children = list(model.layer0.children())
-    conv1.weight.data[:, 0:3, :, :] = senet_layer0_children[0].weight.data
-    model.layer0 = nn.Sequential(*([conv1] + senet_layer0_children[1:]))
-
-    model.avg_pool = nn.AdaptiveAvgPool2d(output_size=1)
-    model.dropout = nn.Dropout(0.5)
-    model.last_linear = nn.Linear(2048, num_classes)
-
-    return model
 
 
 def create_image(fn):
