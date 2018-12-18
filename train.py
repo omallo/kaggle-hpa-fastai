@@ -181,6 +181,7 @@ data = (
 learn = create_cnn(
     data,
     lambda pretrained: create_resnet('resnet34', pretrained, num_classes=28),
+    pretrained=True,
     ps=0.5,
     split_on=resnet_split,
     path=Path(output_dir),
@@ -190,8 +191,7 @@ learn = create_cnn(
 learn.callbacks = [
     EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=5, min_delta=1e-3),
     SaveModelCallback(learn, monitor='val_loss', mode='min', name='model_best_loss'),
-    SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1'),
-    PaperspaceLrLogger(learn)
+    SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
 ]
 
 # learn.load('model_best_f1')
@@ -201,18 +201,16 @@ learn.callbacks = [
 # learn.lr_find()
 # learn.recorder.plot()
 
-lr = 2e-2
-
+lr = 3e-3
 learn.freeze()
-learn.fit(1)
-learn.unfreeze()
-learn.fit_one_cycle(20)
+learn.fit(5, lr=lr)
 
-# learn.freeze()
-# learn.fit_one_cycle(3, max_lr=lr)
-# learn.unfreeze()
-# learn.fit_one_cycle(20, max_lr=lr)
-# learn.fit_one_cycle(30, max_lr=learn.lr_range(slice(lr / 10, lr)))
+lr = 3e-3
+learn.unfreeze()
+learn.fit_one_cycle(10, max_lr=lr)
+learn.fit_one_cycle(10, max_lr=lr)
+learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
+learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
 
 learn.load('model_best_f1')
 
