@@ -87,16 +87,13 @@ def calculate_best_threshold(prediction_logits, targets):
     return thresholds[best_score_index], scores[best_score_index], scores
 
 
-def create_resnet(type, pretrained, num_classes):
+def create_resnet(type, pretrained):
     if type == 'resnet18':
         model = models.resnet18(pretrained=pretrained)
-        num_fc_in_channels = 512
     elif type == 'resnet34':
         model = models.resnet34(pretrained=pretrained)
-        num_fc_in_channels = 512
     elif type == 'resnet50':
         model = models.resnet50(pretrained=pretrained)
-        num_fc_in_channels = 2048
     else:
         raise Exception('Unsupported model model type: "{}"'.format(type))
 
@@ -105,14 +102,11 @@ def create_resnet(type, pretrained, num_classes):
     conv1.weight.data[:, 3, :, :] = model.conv1.weight.data[:, 0, :, :].clone()
     model.conv1 = conv1
 
-    model.avgpool = nn.AdaptiveAvgPool2d(output_size=1)
-    model.fc = nn.Linear(num_fc_in_channels, num_classes)
-
     return model
 
 
 def resnet34(pretrained):
-    return create_resnet('resnet34', pretrained, num_classes=28)
+    return create_resnet('resnet34', pretrained)
 
 
 def resnet_split(m):
@@ -164,6 +158,7 @@ learn = create_cnn(
     data,
     resnet34,
     pretrained=True,
+    cut=-2,
     ps=0.5,
     split_on=resnet_split,
     path=Path(output_dir),
