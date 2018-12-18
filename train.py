@@ -189,6 +189,7 @@ learn.callbacks = [
 # learn.recorder.plot()
 
 lr = 2e-2
+
 learn.freeze()
 learn.fit_one_cycle(3, max_lr=lr)
 learn.unfreeze()
