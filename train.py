@@ -189,9 +189,10 @@ learn.callbacks = [
 # learn.recorder.plot()
 
 lr = 3e-2
-learn.fit_one_cycle(3, max_lr=[lr / 10, lr / 3, lr])
+learn.fit_one_cycle(3, max_lr=lr)
 learn.unfreeze()
-learn.fit_one_cycle(50, max_lr=[lr / 10, lr / 3, lr])
+learn.fit_one_cycle(20, max_lr=lr)
+learn.fit_one_cycle(30, max_lr=[lr / 10, lr / 3, lr])
 # learn.fit_one_cycle(50, max_lr=learn.lr_range(slice(lr)))
 
 learn.load('model_best_f1')
