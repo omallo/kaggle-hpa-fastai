@@ -137,7 +137,7 @@ def seresnext50(pretrained):
 
 
 def create_image(fn):
-    return Image(pil2tensor(PIL.Image.fromarray(load_image(fn, 256)), np.float32) / 255.)
+    return Image(pil2tensor(PIL.Image.fromarray(load_image(fn, 512)), np.float32) / 255.)
 
 
 def write_submission(prediction_categories, filename):
@@ -177,11 +177,11 @@ data = (
 
 learn = create_cnn(
     data,
-    resnet34,
+    seresnext50,
     pretrained=True,
-    cut=-2,
+    cut=-3,
     ps=0.5,
-    split_on=resnet_split,
+    # split_on=resnet_split,
     path=Path(output_dir),
     loss_func=focal_loss,
     metrics=[F1Score()])
@@ -203,13 +203,9 @@ learn.callbacks = [
 lr = 0.003
 learn.freeze()
 learn.fit(3, lr=lr)
-
-lr = 0.003
 learn.unfreeze()
-learn.fit_one_cycle(10, max_lr=lr)
-learn.fit_one_cycle(10, max_lr=lr)
-learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
-learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
+learn.fit_one_cycle(30, max_lr=lr)
+learn.fit_one_cycle(30, max_lr=slice(lr / 10, lr))
 
 learn.load('model_best_f1')
 
