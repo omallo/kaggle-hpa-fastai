@@ -60,12 +60,12 @@ class PaperspaceLrLogger(LearnerCallback):
     def __init__(self, learn):
         super().__init__(learn)
         self.batch = 0
-        print('{"chart": "lr", "axis": "batch"}', file=sys.stderr)
+        print('{"chart": "lr", "axis": "batch"}')
 
     def on_batch_begin(self, train, **kwargs):
         if train:
             self.batch += 1
-            print('{"chart": "lr", "x": {}, "y": {:.4f}'.format(self.batch, self.learn.opt.lr), file=sys.stderr)
+            print('{"chart": "lr", "x": %d, "y": %.4f' % (self.batch, self.learn.opt.lr))
 
 
 def one_hot_to_categories(one_hot_categories):
