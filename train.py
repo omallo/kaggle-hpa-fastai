@@ -56,6 +56,18 @@ def focal_loss(input, target, gamma=2.0):
     return loss.sum(dim=1).mean()
 
 
+class PaperspaceLrLogger(LearnerCallback):
+    def __init__(self, learn):
+        super().__init__(learn)
+        self.batch = 0
+        print('{"chart": "lr", "axis": "batch"}', file=sys.stderr)
+
+    def on_batch_begin(self, train, **kwargs):
+        if train:
+            self.batch += 1
+            print('{"chart": "lr", "x": {}, "y": {:.4f}'.format(self.batch, self.learn.opt.lr), file=sys.stderr)
+
+
 def one_hot_to_categories(one_hot_categories):
     one_hot_categories_np = one_hot_categories.cpu().data.numpy()
     return [np.squeeze(np.argwhere(p == 1)) for p in one_hot_categories_np]
@@ -178,7 +190,8 @@ learn = create_cnn(
 learn.callbacks = [
     EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=5, min_delta=1e-3),
     SaveModelCallback(learn, monitor='val_loss', mode='min', name='model_best_loss'),
-    SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
+    SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1'),
+    PaperspaceLrLogger(learn)
 ]
 
 # learn.load('model_best_f1')
@@ -191,10 +204,15 @@ learn.callbacks = [
 lr = 2e-2
 
 learn.freeze()
-learn.fit_one_cycle(3, max_lr=lr)
+learn.fit(1)
 learn.unfreeze()
-learn.fit_one_cycle(20, max_lr=lr)
-learn.fit_one_cycle(30, max_lr=learn.lr_range(slice(lr / 10, lr)))
+learn.fit_one_cycle(20)
+
+# learn.freeze()
+# learn.fit_one_cycle(3, max_lr=lr)
+# learn.unfreeze()
+# learn.fit_one_cycle(20, max_lr=lr)
+# learn.fit_one_cycle(30, max_lr=learn.lr_range(slice(lr / 10, lr)))
 
 learn.load('model_best_f1')
 
