@@ -168,7 +168,7 @@ data = (
         .transform(tfms)
         .add_test(test_images)
         # .databunch(bs=64, num_workers=8)
-        .databunch(bs=64)
+        .databunch(bs=32)
         .normalize(protein_stats)
 )
 
@@ -204,19 +204,12 @@ lr = 0.003
 learn.freeze()
 learn.fit(3, lr=lr)
 learn.unfreeze()
-learn.fit_one_cycle(30, max_lr=lr)
-learn.fit_one_cycle(30, max_lr=slice(lr / 10, lr))
+learn.fit_one_cycle(20, max_lr=lr)
+learn.fit_one_cycle(20, max_lr=lr)
+learn.fit_one_cycle(20, max_lr=slice(lr / 10, lr))
+learn.fit_one_cycle(20, max_lr=slice(lr / 10, lr))
 
 learn.load('model_best_f1')
-
-valid_prediction_logits, valid_prediction_categories_one_hot = learn.get_preds(ds_type=DatasetType.Valid)
-best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
-print('best threshold / score: {:.3f} / {:.3f}'.format(best_threshold, best_score))
-
-test_prediction_logits, _ = learn.get_preds(ds_type=DatasetType.Test)
-test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
-write_submission(test_prediction_categories, '{}/submission.csv'.format(output_dir))
-np.save('{}/test_prediction_logits.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
 
 valid_prediction_logits, valid_prediction_categories_one_hot = learn.TTA(ds_type=DatasetType.Valid)
 best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
@@ -224,8 +217,8 @@ print('best threshold / score: {:.3f} / {:.3f}'.format(best_threshold, best_scor
 
 test_prediction_logits, _ = learn.TTA(ds_type=DatasetType.Test)
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
-write_submission(test_prediction_categories, '{}/submission_tta.csv'.format(output_dir))
-np.save('{}/test_prediction_logits_tta.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
+write_submission(test_prediction_categories, '{}/submission_best_f1.csv'.format(output_dir))
+np.save('{}/test_prediction_logits_best_f1.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
 
 learn.load('model_best_loss')
 
@@ -235,5 +228,5 @@ print('best threshold / score: {:.3f} / {:.3f}'.format(best_threshold, best_scor
 
 test_prediction_logits, _ = learn.TTA(ds_type=DatasetType.Test)
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
-write_submission(test_prediction_categories, '{}/submission_best_loss_tta.csv'.format(output_dir))
-np.save('{}/test_prediction_logits_best_loss_tta.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
+write_submission(test_prediction_categories, '{}/submission_best_loss.csv'.format(output_dir))
+np.save('{}/test_prediction_logits_best_loss.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
