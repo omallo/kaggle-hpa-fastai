@@ -193,7 +193,7 @@ learn = create_cnn(
     metrics=[F1Score()])
 
 learn.callbacks = [
-    EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=5, min_delta=1e-3),
+    # EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=5, min_delta=1e-3),
     SaveModelCallback(learn, monitor='val_loss', mode='min', name='model_best_loss'),
     SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
 ]
@@ -205,11 +205,11 @@ learn.callbacks = [
 # learn.lr_find()
 # learn.recorder.plot()
 
-lr = 3e-3
+lr = 0.003
 learn.freeze()
-learn.fit(5, lr=lr)
+learn.fit(3, lr=lr)
 
-lr = 3e-3
+lr = 0.003
 learn.unfreeze()
 learn.fit_one_cycle(10, max_lr=lr)
 learn.fit_one_cycle(10, max_lr=lr)
