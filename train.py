@@ -2,6 +2,7 @@ import cv2
 from fastai import *
 from fastai.callbacks import *
 from fastai.vision import *
+from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
 from sklearn.metrics import f1_score as skl_f1_score
 
 input_dir = '/storage/kaggle/hpa'
@@ -95,7 +96,7 @@ def create_resnet(type, pretrained):
     elif type == 'resnet50':
         model = models.resnet50(pretrained=pretrained)
     else:
-        raise Exception('Unsupported model model type: "{}"'.format(type))
+        raise Exception('Unsupported model type: "{}"'.format(type))
 
     conv1 = nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3, bias=False)
     conv1.weight.data[:, 0:3, :, :] = model.conv1.weight.data
@@ -113,6 +114,28 @@ def resnet_split(m):
     return (m[0][6], m[1])
 
 
+def create_senet(type, pretrained):
+    if type == 'seresnext50':
+        model = se_resnext50_32x4d(pretrained='imagenet' if pretrained else None)
+        conv1 = nn.Conv2d(4, 64, kernel_size=7, stride=2, padding=3, bias=False)
+    elif type == 'senet154':
+        model = senet154(pretrained='imagenet' if pretrained else None)
+        conv1 = nn.Conv2d(4, 64, 3, stride=2, padding=1, bias=False)
+    else:
+        raise Exception('Unsupported model type: ''{}'''.format(type))
+
+    senet_layer0_children = list(model.layer0.children())
+    conv1.weight.data[:, 0:3, :, :] = senet_layer0_children[0].weight.data
+    conv1.weight.data[:, 3, :, :] = senet_layer0_children[0].weight.data[:, 0, :, :].clone()
+    model.layer0 = nn.Sequential(*([conv1] + senet_layer0_children[1:]))
+
+    return model
+
+
+def seresnext50(pretrained):
+    return create_senet('seresnext50', pretrained)
+
+
 def create_image(fn):
     return Image(pil2tensor(PIL.Image.fromarray(load_image(fn, 256)), np.float32) / 255.)
 
@@ -127,8 +150,6 @@ class HpaImageItemList(ImageItemList):
     def open(self, fn):
         return create_image(fn)
 
-
-# shutil.copytree('/storage/models/hpa/fastai/models', '{}/models'.format(output_dir))
 
 protein_stats = ([0.08069, 0.05258, 0.05487, 0.08282], [0.13704, 0.10145, 0.15313, 0.13814])
 tfms = get_transforms(flip_vert=True, xtra_tfms=zoom_crop(scale=(0.8, 1.2), do_rand=True))
@@ -171,9 +192,10 @@ learn.callbacks = [
     SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
 ]
 
-# learn.load('model_best_f1')
-
 # print(learn.summary)
+
+# shutil.copytree('/storage/models/hpa/fastai/models', '{}/models'.format(output_dir))
+# learn.load('model_best_f1')
 
 # learn.lr_find()
 # learn.recorder.plot()
