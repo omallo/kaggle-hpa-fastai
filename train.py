@@ -170,7 +170,7 @@ learn = create_cnn(
     data,
     lambda pretrained: create_resnet('resnet34', pretrained, num_classes=28),
     ps=0.5,
-    # split_on=resnet_split,
+    split_on=resnet_split,
     path=Path(output_dir),
     loss_func=focal_loss,
     metrics=[F1Score()])
