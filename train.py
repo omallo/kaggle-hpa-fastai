@@ -203,10 +203,13 @@ learn.callbacks = [
 # learn.recorder.plot()
 
 lr = 0.003
+image_size = 128
 learn.freeze()
 learn.fit(3, lr=lr)
 learn.unfreeze()
-learn.fit_one_cycle(20, max_lr=lr)
+for s in np.linspace(128, 512, 5):
+    image_size = int(s)
+    learn.fit_one_cycle(10, max_lr=lr)
 learn.fit_one_cycle(20, max_lr=slice(lr / 10, lr))
 
 learn.load('model_best_f1')
