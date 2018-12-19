@@ -207,7 +207,7 @@ image_size = 128
 learn.freeze()
 learn.fit(3, lr=lr)
 learn.unfreeze()
-for s in np.linspace(128, 512, 5):
+for s in np.linspace(128, 512, 7):
     image_size = int(s)
     learn.fit_one_cycle(10, max_lr=lr)
 learn.fit_one_cycle(20, max_lr=slice(lr / 10, lr))
