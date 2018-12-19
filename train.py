@@ -7,6 +7,8 @@ from sklearn.metrics import f1_score as skl_f1_score
 
 input_dir = '/storage/kaggle/hpa'
 output_dir = '/artifacts'
+image_size = 256
+batch_size = 32
 
 
 def load_image(base_name, image_size):
@@ -137,7 +139,7 @@ def seresnext50(pretrained):
 
 
 def create_image(fn):
-    return Image(pil2tensor(PIL.Image.fromarray(load_image(fn, 512)), np.float32) / 255.)
+    return Image(pil2tensor(PIL.Image.fromarray(load_image(fn, image_size)), np.float32) / 255.)
 
 
 def write_submission(prediction_categories, filename):
@@ -168,7 +170,7 @@ data = (
         .transform(tfms)
         .add_test(test_images)
         # .databunch(bs=64, num_workers=8)
-        .databunch(bs=32)
+        .databunch(bs=batch_size)
         .normalize(protein_stats)
 )
 
@@ -177,11 +179,11 @@ data = (
 
 learn = create_cnn(
     data,
-    seresnext50,
+    resnet34,
     pretrained=True,
-    cut=-3,
+    cut=-2,
     ps=0.5,
-    # split_on=resnet_split,
+    split_on=resnet_split,
     path=Path(output_dir),
     loss_func=focal_loss,
     metrics=[F1Score()])
@@ -205,8 +207,6 @@ learn.freeze()
 learn.fit(3, lr=lr)
 learn.unfreeze()
 learn.fit_one_cycle(20, max_lr=lr)
-learn.fit_one_cycle(20, max_lr=lr)
-learn.fit_one_cycle(20, max_lr=slice(lr / 10, lr))
 learn.fit_one_cycle(20, max_lr=slice(lr / 10, lr))
 
 learn.load('model_best_f1')
