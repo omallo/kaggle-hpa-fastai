@@ -210,7 +210,7 @@ learn.unfreeze()
 for s in np.linspace(128, 512, 7):
     image_size = int(s)
     learn.fit_one_cycle(10, max_lr=lr)
-learn.fit_one_cycle(20, max_lr=slice(lr / 10, lr))
+learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
 
 learn.load('model_best_f1')
 
