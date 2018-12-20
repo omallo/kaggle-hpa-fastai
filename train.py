@@ -183,7 +183,7 @@ data = (
 
 learn = create_cnn(
     data,
-    resnet50,
+    resnet34,
     pretrained=True,
     cut=-2,
     ps=0.5,
