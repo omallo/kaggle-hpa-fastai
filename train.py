@@ -112,6 +112,10 @@ def resnet34(pretrained):
     return create_resnet('resnet34', pretrained)
 
 
+def resnet50(pretrained):
+    return create_resnet('resnet50', pretrained)
+
+
 def resnet_split(m):
     return (m[0][6], m[1])
 
@@ -179,7 +183,7 @@ data = (
 
 learn = create_cnn(
     data,
-    resnet34,
+    resnet50,
     pretrained=True,
     cut=-2,
     ps=0.5,
