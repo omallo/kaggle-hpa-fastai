@@ -58,6 +58,27 @@ def focal_loss(input, target, gamma=2.0):
     return loss.sum(dim=1).mean()
 
 
+def f1_loss(logits, targets):
+    epsilon = 1e-6
+    beta = 1
+    batch_size = logits.size()[0]
+
+    p = F.sigmoid(logits)
+    l = targets
+    num_pos = torch.sum(p, 1) + epsilon
+    num_pos_hat = torch.sum(l, 1) + epsilon
+    tp = torch.sum(l * p, 1)
+    precise = tp / num_pos
+    recall = tp / num_pos_hat
+    fs = (1 + beta * beta) * precise * recall / (beta * beta * precise + recall + epsilon)
+    loss = fs.sum() / batch_size
+    return 1 - loss
+
+
+def focal_f1_combined_loss(logits, targets, alpha=0.7):
+    return alpha * focal_loss(logits, targets) + (1 - alpha) * f1_loss(logits, targets)
+
+
 class PaperspaceLrLogger(LearnerCallback):
     def __init__(self, learn):
         super().__init__(learn)
@@ -189,7 +210,7 @@ learn = create_cnn(
     ps=0.5,
     split_on=resnet_split,
     path=Path(output_dir),
-    loss_func=focal_loss,
+    loss_func=focal_f1_combined_loss,
     metrics=[F1Score()])
 
 learn.callbacks = [
@@ -227,13 +248,13 @@ test_prediction_categories = calculate_categories(test_prediction_logits, best_t
 write_submission(test_prediction_categories, '{}/submission_best_f1.csv'.format(output_dir))
 np.save('{}/test_prediction_logits_best_f1.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
 
-# learn.load('model_best_loss')
+learn.load('model_best_loss')
 
-# valid_prediction_logits, valid_prediction_categories_one_hot = learn.TTA(ds_type=DatasetType.Valid)
-# best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
-# print('best threshold / score: {:.3f} / {:.3f}'.format(best_threshold, best_score))
+valid_prediction_logits, valid_prediction_categories_one_hot = learn.TTA(ds_type=DatasetType.Valid)
+best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
+print('best threshold / score: {:.3f} / {:.3f}'.format(best_threshold, best_score))
 
-# test_prediction_logits, _ = learn.TTA(ds_type=DatasetType.Test)
-# test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
-# write_submission(test_prediction_categories, '{}/submission_best_loss.csv'.format(output_dir))
-# np.save('{}/test_prediction_logits_best_loss.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
+test_prediction_logits, _ = learn.TTA(ds_type=DatasetType.Test)
+test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
+write_submission(test_prediction_categories, '{}/submission_best_loss.csv'.format(output_dir))
+np.save('{}/test_prediction_logits_best_loss.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
