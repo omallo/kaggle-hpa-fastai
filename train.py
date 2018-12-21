@@ -210,7 +210,7 @@ learn = create_cnn(
     ps=0.5,
     split_on=resnet_split,
     path=Path(output_dir),
-    loss_func=focal_f1_combined_loss,
+    loss_func=f1_loss,
     metrics=[F1Score()])
 
 learn.callbacks = [
