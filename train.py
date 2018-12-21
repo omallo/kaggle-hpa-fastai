@@ -75,7 +75,7 @@ def f1_loss(logits, targets):
     return 1 - loss
 
 
-def focal_f1_combined_loss(logits, targets, alpha=0.7):
+def focal_f1_combined_loss(logits, targets, alpha=0.5):
     return alpha * focal_loss(logits, targets) + (1 - alpha) * f1_loss(logits, targets)
 
 
