@@ -204,13 +204,13 @@ data = (
 
 learn = create_cnn(
     data,
-    resnet34,
+    seresnext50,
     pretrained=True,
-    cut=-2,
+    cut=-3,
     ps=0.5,
-    split_on=resnet_split,
+    # split_on=resnet_split,
     path=Path(output_dir),
-    loss_func=f1_loss,
+    loss_func=focal_loss,
     metrics=[F1Score()])
 
 learn.callbacks = [
