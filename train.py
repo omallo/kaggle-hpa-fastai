@@ -221,7 +221,8 @@ learn = create_cnn(
 learn.callbacks = [
     # EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=5, min_delta=1e-3),
     SaveModelCallback(learn, monitor='val_loss', mode='min', name='model_best_loss'),
-    SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
+    SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1'),
+    MixUpCallback()
 ]
 
 # print(learn.summary)
