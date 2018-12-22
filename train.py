@@ -9,6 +9,7 @@ input_dir = '/storage/kaggle/hpa'
 output_dir = '/artifacts'
 image_size = 256
 batch_size = 32
+use_progressive_image_resizing = False
 
 
 def load_image(base_name, image_size):
@@ -204,11 +205,11 @@ data = (
 
 learn = create_cnn(
     data,
-    seresnext50,
+    resnet34,
     pretrained=True,
-    cut=-3,
+    cut=-2,
     ps=0.5,
-    # split_on=resnet_split,
+    split_on=resnet_split,
     path=Path(output_dir),
     loss_func=focal_loss,
     metrics=[F1Score()])
@@ -228,14 +229,22 @@ learn.callbacks = [
 # learn.recorder.plot()
 
 lr = 0.003
-image_size = 128
-learn.freeze()
-learn.fit(3, lr=lr)
-learn.unfreeze()
-for s in np.linspace(128, 512, 7):
-    image_size = int(s)
+if use_progressive_image_resizing:
+    image_size = 128
+    learn.freeze()
+    learn.fit(3, lr=lr)
+    learn.unfreeze()
+    for s in np.linspace(128, 512, 7):
+        image_size = int(s)
+        learn.fit_one_cycle(10, max_lr=lr)
+    learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
+else:
+    learn.freeze()
+    learn.fit(3, lr=lr)
+    learn.unfreeze()
     learn.fit_one_cycle(10, max_lr=lr)
-learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
+    learn.fit_one_cycle(10, max_lr=lr)
+    learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
 
 learn.load('model_best_f1')
 
