@@ -11,6 +11,7 @@ base_model_dir = None
 image_size = 256
 batch_size = 32
 num_cycles = 2
+cycle_len = 10
 use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
@@ -219,7 +220,7 @@ learn = create_cnn(
     metrics=[F1Score()])
 
 learn.callbacks = [
-    EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=10, min_delta=1e-3),
+    EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=cycle_len, min_delta=1e-3),
     SaveModelCallback(learn, monitor='val_loss', mode='min', name='model_best_loss'),
     SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1'),
     # MixUpCallback(learn, alpha=0.4, stack_x=False, stack_y=False),  # stack_y=True leads to error
@@ -248,8 +249,8 @@ learn.fit(3, lr=lr)
 learn.unfreeze()
 for c in range(num_cycles):
     image_size = image_sizes[c]
-    learn.fit_one_cycle(10, max_lr=lr)
-learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
+    learn.fit_one_cycle(cycle_len, max_lr=lr)
+learn.fit_one_cycle(cycle_len, max_lr=slice(lr / 10, lr))
 
 learn.load('model_best_f1')
 
