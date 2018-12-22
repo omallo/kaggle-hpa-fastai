@@ -7,9 +7,13 @@ from sklearn.metrics import f1_score as skl_f1_score
 
 input_dir = '/storage/kaggle/hpa'
 output_dir = '/artifacts'
+base_model_dir = None
 image_size = 256
 batch_size = 32
+num_cycles = 2
 use_progressive_image_resizing = False
+progressive_image_size_start = 128
+progressive_image_size_end = 512
 
 
 def load_image(base_name, image_size):
@@ -222,29 +226,29 @@ learn.callbacks = [
 
 # print(learn.summary)
 
-# shutil.copytree('/storage/models/hpa/fastai/models', '{}/models'.format(output_dir))
-# learn.load('model_best_f1')
+if base_model_dir:
+    shutil.copytree('{}/models'.format(base_model_dir), '{}/models'.format(output_dir))
+    learn.load('model_best_f1')
 
 # learn.lr_find()
 # learn.recorder.plot()
 
 lr = 0.003
+
 if use_progressive_image_resizing:
-    image_size = 128
-    learn.freeze()
-    learn.fit(3, lr=lr)
-    learn.unfreeze()
-    for s in np.linspace(128, 512, 7):
-        image_size = int(s)
-        learn.fit_one_cycle(10, max_lr=lr)
-    learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
+    image_sizes = np.linspace(progressive_image_size_start, progressive_image_size_end, num_cycles, dtype=np.int32)
 else:
-    learn.freeze()
-    learn.fit(3, lr=lr)
-    learn.unfreeze()
+    image_sizes = np.array([image_size] * num_cycles)
+print('Image sizes: {}'.format(image_sizes))
+
+image_size = image_sizes[0]
+learn.freeze()
+learn.fit(3, lr=lr)
+learn.unfreeze()
+for c in range(num_cycles):
+    image_size = image_sizes[c]
     learn.fit_one_cycle(10, max_lr=lr)
-    learn.fit_one_cycle(10, max_lr=lr)
-    learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
+learn.fit_one_cycle(10, max_lr=slice(lr / 10, lr))
 
 learn.load('model_best_f1')
 
