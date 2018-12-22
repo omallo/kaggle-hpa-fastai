@@ -219,7 +219,7 @@ learn = create_cnn(
     metrics=[F1Score()])
 
 learn.callbacks = [
-    # EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=5, min_delta=1e-3),
+    EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=10, min_delta=1e-3),
     SaveModelCallback(learn, monitor='val_loss', mode='min', name='model_best_loss'),
     SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1'),
     # MixUpCallback(learn, alpha=0.4, stack_x=False, stack_y=False),  # stack_y=True leads to error
