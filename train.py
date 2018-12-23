@@ -53,15 +53,15 @@ class F1Score(Callback):
 
 @dataclass
 class MultiTrainSaveModelCallback(TrackerCallback):
-    name = 'bestmodel'
-    cycle = 0
-    best_global = None
+    name: str = 'bestmodel'
 
     def on_train_begin(self, **kwargs):
         super().on_train_begin(**kwargs)
-        if self.best_global is None:
+        if not hasattr(self, 'best_global'):
             self.best_global = self.best
-        self.cycle += 1
+            self.cycle = 1
+        else:
+            self.cycle += 1
 
     def on_epoch_end(self, epoch, **kwargs):
         current = self.get_monitor_value()
@@ -75,8 +75,8 @@ class MultiTrainSaveModelCallback(TrackerCallback):
 
 @dataclass
 class MultiTrainEarlyStoppingCallback(TrackerCallback):
-    min_delta = 0
-    patience = 0
+    min_delta: int = 0
+    patience: int = 0
 
     def __post_init__(self):
         super().__post_init__()
@@ -84,7 +84,7 @@ class MultiTrainEarlyStoppingCallback(TrackerCallback):
             self.min_delta *= -1
 
     def on_train_begin(self, **kwargs):
-        if self.best is None:
+        if not hasattr(self, 'best'):
             super().on_train_begin(**kwargs)
             self.wait = 0
             self.early_stopped = False
