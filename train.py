@@ -17,6 +17,39 @@ use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
 
+name_label_dict = {
+    0: ('Nucleoplasm', 12885),
+    1: ('Nuclear membrane', 1254),
+    2: ('Nucleoli', 3621),
+    3: ('Nucleoli fibrillar center', 1561),
+    4: ('Nuclear speckles', 1858),
+    5: ('Nuclear bodies', 2513),
+    6: ('Endoplasmic reticulum', 1008),
+    7: ('Golgi apparatus', 2822),
+    8: ('Peroxisomes', 53),
+    9: ('Endosomes', 45),
+    10: ('Lysosomes', 28),
+    11: ('Intermediate filaments', 1093),
+    12: ('Actin filaments', 688),
+    13: ('Focal adhesion sites', 537),
+    14: ('Microtubules', 1066),
+    15: ('Microtubule ends', 21),
+    16: ('Cytokinetic bridge', 530),
+    17: ('Mitotic spindle', 210),
+    18: ('Microtubule organizing center', 902),
+    19: ('Centrosome', 1482),
+    20: ('Lipid droplets', 172),
+    21: ('Plasma membrane', 3777),
+    22: ('Cell junctions', 802),
+    23: ('Mitochondria', 2965),
+    24: ('Aggresome', 322),
+    25: ('Cytosol', 8228),
+    26: ('Cytoplasmic bodies', 328),
+    27: ('Rods &amp; rings', 11)
+}
+
+n_labels = 50782
+
 
 def load_image(base_name, image_size):
     r = load_image_channel('{}_red.png'.format(base_name), image_size)
@@ -244,13 +277,21 @@ def write_submission(prediction_categories, filename):
     submission_df.to_csv(filename)
 
 
-def calculate_balance_weights(ds, num_classes):
-    counts = np.zeros(num_classes)
-    for y in ds.y:
-        counts[np.asarray(list(map(int, y.obj)))] += 1
+def cls_wts(label_dict, mu=0.5):
+    prob_dict, prob_dict_bal = {}, {}
+    max_ent_wt = 1 / 28
+    for i in range(28):
+        prob_dict[i] = label_dict[i][1] / n_labels
+        if prob_dict[i] > max_ent_wt:
+            prob_dict_bal[i] = prob_dict[i] - mu * (prob_dict[i] - max_ent_wt)
+        else:
+            prob_dict_bal[i] = prob_dict[i] + mu * (max_ent_wt - prob_dict[i])
+    return prob_dict, prob_dict_bal
 
-    median_count = np.median(counts)
-    class_weights = np.asarray([median_count / c for c in counts])
+
+def calculate_balance_weights(ds):
+    prob_dict, prob_dict_bal = cls_wts(name_label_dict, mu=0.0)
+    class_weights = np.array([prob_dict_bal[c] / prob_dict[c] for c in range(28)])
 
     weights = [np.max(class_weights[np.asarray(list(map(int, y.obj)))]) for y in ds.y]
 
@@ -268,7 +309,7 @@ class HpaImageDataBunch(ImageDataBunch):
         datasets = cls._init_ds(train_ds, valid_ds, test_ds)
         val_bs = bs
 
-        train_weights, _ = calculate_balance_weights(train_ds, 28)
+        train_weights, _ = calculate_balance_weights(train_ds)
         train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
 
         dls = [DataLoader(d, b, shuffle=s, sampler=p, drop_last=(s and b > 1), num_workers=num_workers) for d, b, s, p
