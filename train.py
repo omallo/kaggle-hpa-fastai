@@ -124,6 +124,10 @@ def create_resnet(type, pretrained):
         model = models.resnet34(pretrained=pretrained)
     elif type == 'resnet50':
         model = models.resnet50(pretrained=pretrained)
+    elif type == 'resnet101':
+        model = models.resnet101(pretrained=pretrained)
+    elif type == 'resnet152':
+        model = models.resnet152(pretrained=pretrained)
     else:
         raise Exception('Unsupported model type: "{}"'.format(type))
 
@@ -141,6 +145,14 @@ def resnet34(pretrained):
 
 def resnet50(pretrained):
     return create_resnet('resnet50', pretrained)
+
+
+def resnet101(pretrained):
+    return create_resnet('resnet101', pretrained)
+
+
+def resnet152(pretrained):
+    return create_resnet('resnet152', pretrained)
 
 
 def resnet_split(m):
