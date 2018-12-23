@@ -4,10 +4,11 @@ from fastai.callbacks import *
 from fastai.vision import *
 from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
 from sklearn.metrics import f1_score as skl_f1_score
+from torch.utils.data.sampler import WeightedRandomSampler
 
 input_dir = '/storage/kaggle/hpa'
 output_dir = '/artifacts'
-base_model_dir = '/storage/models/hpa/fastai-progressive'
+base_model_dir = '/storage/models/hpa/resnet34'
 image_size = 512
 batch_size = 32
 num_cycles = 5
@@ -243,7 +244,43 @@ def write_submission(prediction_categories, filename):
     submission_df.to_csv(filename)
 
 
+def calculate_balance_weights(ds, num_classes):
+    counts = np.zeros(num_classes)
+    for y in ds.y:
+        counts[np.asarray(list(map(int, y.obj)))] += 1
+
+    median_count = np.median(counts)
+    class_weights = np.asarray([median_count / c for c in counts])
+
+    weights = [np.max(class_weights[np.asarray(list(map(int, y.obj)))]) for y in ds.y]
+
+    return weights, class_weights.tolist()
+
+
+class HpaImageDataBunch(ImageDataBunch):
+    @classmethod
+    def create(cls, train_ds: Dataset, valid_ds: Dataset, test_ds: Optional[Dataset] = None, path: PathOrStr = '.',
+               bs: int = 64,
+               num_workers: int = defaults.cpus, tfms: Optional[Collection[Callable]] = None,
+               device: torch.device = None,
+               collate_fn: Callable = data_collate, no_check: bool = False) -> 'DataBunch':
+        "Create a `DataBunch` from `train_ds`, `valid_ds` and maybe `test_ds` with a batch size of `bs`."
+        datasets = cls._init_ds(train_ds, valid_ds, test_ds)
+        val_bs = bs
+
+        train_weights, _ = calculate_balance_weights(train_ds, 28)
+        train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
+
+        dls = [DataLoader(d, b, shuffle=s, sampler=p, drop_last=(s and b > 1), num_workers=num_workers) for d, b, s, p
+               in
+               zip(datasets, (bs, val_bs, val_bs, val_bs), (False, False, False, False),
+                   (train_sampler, None, None, None))]
+        return cls(*dls, path=path, device=device, tfms=tfms, collate_fn=collate_fn, no_check=no_check)
+
+
 class HpaImageItemList(ImageItemList):
+    _bunch = HpaImageDataBunch
+
     def open(self, fn):
         return create_image(fn)
 
@@ -259,7 +296,7 @@ test_images = (
 data = (
     HpaImageItemList
         .from_csv(input_dir, 'train.csv', folder='train', create_func=create_image)
-        # .use_partial_data(sample_pct=0.2, seed=42)
+        # .use_partial_data(sample_pct=0.005, seed=42)
         .random_split_by_pct(valid_pct=0.2, seed=42)
         .label_from_df(sep=' ', classes=[str(i) for i in range(28)])
         .transform(tfms)
