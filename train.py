@@ -271,6 +271,8 @@ data = (
 
 # data.show_batch(rows=3)
 
+if base_model_dir is not None:
+    shutil.copytree('{}/models'.format(base_model_dir), '{}/models'.format(output_dir))
 
 learn = create_cnn(
     data,
@@ -297,7 +299,6 @@ learn.callbacks = [
 # print(learn.summary)
 
 if base_model_dir is not None:
-    shutil.copytree('{}/models'.format(base_model_dir), '{}/models'.format(output_dir))
     learn.load('model_best_f1')
 
 # learn.lr_find()
