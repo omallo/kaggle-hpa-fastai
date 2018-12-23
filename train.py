@@ -73,6 +73,36 @@ class MultiTrainSaveModelCallback(TrackerCallback):
             self.learn.save(f'{self.name}')
 
 
+@dataclass
+class MultiTrainEarlyStoppingCallback(TrackerCallback):
+    min_delta = 0
+    patience = 0
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.operator == np.less:
+            self.min_delta *= -1
+
+    def on_train_begin(self, **kwargs):
+        if self.best is None:
+            super().on_train_begin(**kwargs)
+            self.wait = 0
+            self.early_stopped = False
+
+    def on_epoch_end(self, epoch, **kwargs):
+        current = self.get_monitor_value()
+        if current is None:
+            return
+        if self.operator(current - self.min_delta, self.best):
+            self.best, self.wait = current, 0
+        else:
+            self.wait += 1
+            if self.wait > self.patience:
+                print(f'Epoch {epoch}: early stopping')
+                self.early_stopped = True
+                return True
+
+
 def focal_loss(input, target, gamma=2.0):
     assert target.size() == input.size(), \
         'Target size ({}) must be the same as input size ({})'.format(target.size(), input.size())
@@ -253,19 +283,20 @@ learn = create_cnn(
     loss_func=focal_loss,
     metrics=[F1Score()])
 
-early_stopper = EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=cycle_len, min_delta=1e-3)
+early_stopper = \
+    MultiTrainEarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=cycle_len, min_delta=1e-3)
 best_loss_model_saver = MultiTrainSaveModelCallback(learn, monitor='val_loss', mode='min', name='model_best_loss')
 best_f1_model_saver = MultiTrainSaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
 
 learn.callbacks = [
-    # early_stopper,
+    early_stopper,
     best_loss_model_saver,
     best_f1_model_saver
 ]
 
 # print(learn.summary)
 
-if base_model_dir:
+if base_model_dir is not None:
     shutil.copytree('{}/models'.format(base_model_dir), '{}/models'.format(output_dir))
     learn.load('model_best_f1')
 
@@ -280,14 +311,19 @@ else:
     image_sizes = np.array([image_size] * num_cycles)
 print('Image sizes: {}'.format(image_sizes))
 
-image_size = image_sizes[0]
-learn.freeze()
-learn.fit(3, lr=lr)
+if base_model_dir is None:
+    image_size = image_sizes[0]
+    learn.freeze()
+    learn.fit(3, lr=lr)
+
 learn.unfreeze()
 for c in range(num_cycles):
     image_size = image_sizes[c]
     learn.fit_one_cycle(cycle_len, max_lr=lr)
-learn.fit_one_cycle(cycle_len, max_lr=slice(lr / 10, lr))
+    if early_stopper.early_stopped:
+        break
+if not early_stopper.early_stopped:
+    learn.fit_one_cycle(cycle_len, max_lr=slice(lr / 10, lr))
 
 print('best loss: {:.6f}'.format(best_loss_model_saver.best_global))
 print('best f1 score: {:.6f}'.format(best_f1_model_saver.best_global))
