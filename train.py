@@ -51,6 +51,28 @@ class F1Score(Callback):
         self.metric = f1_score(torch.tensor(self.prediction_logits), torch.tensor(self.targets))
 
 
+@dataclass
+class MultiTrainSaveModelCallback(TrackerCallback):
+    name = 'bestmodel'
+    cycle = 0
+    best_global = None
+
+    def on_train_begin(self, **kwargs):
+        super().on_train_begin(**kwargs)
+        if self.best_global is None:
+            self.best_global = self.best
+        self.cycle += 1
+
+    def on_epoch_end(self, epoch, **kwargs):
+        current = self.get_monitor_value()
+        if current is not None and self.operator(current, self.best):
+            self.best = current
+            self.learn.save(f'{self.name}_{self.cycle}')
+        if current is not None and self.operator(current, self.best_global):
+            self.best_global = current
+            self.learn.save(f'{self.name}')
+
+
 def focal_loss(input, target, gamma=2.0):
     assert target.size() == input.size(), \
         'Target size ({}) must be the same as input size ({})'.format(target.size(), input.size())
@@ -231,11 +253,14 @@ learn = create_cnn(
     loss_func=focal_loss,
     metrics=[F1Score()])
 
+early_stopper = EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=cycle_len, min_delta=1e-3)
+best_loss_model_saver = MultiTrainSaveModelCallback(learn, monitor='val_loss', mode='min', name='model_best_loss')
+best_f1_model_saver = MultiTrainSaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
+
 learn.callbacks = [
-    EarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=cycle_len, min_delta=1e-3),
-    SaveModelCallback(learn, monitor='val_loss', mode='min', name='model_best_loss'),
-    SaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1'),
-    # MixUpCallback(learn, alpha=0.4, stack_x=False, stack_y=False),  # stack_y=True leads to error
+    # early_stopper,
+    best_loss_model_saver,
+    best_f1_model_saver
 ]
 
 # print(learn.summary)
@@ -264,11 +289,14 @@ for c in range(num_cycles):
     learn.fit_one_cycle(cycle_len, max_lr=lr)
 learn.fit_one_cycle(cycle_len, max_lr=slice(lr / 10, lr))
 
+print('best loss: {:.6f}'.format(best_loss_model_saver.best_global))
+print('best f1 score: {:.6f}'.format(best_f1_model_saver.best_global))
+
 learn.load('model_best_f1')
 
 valid_prediction_logits, valid_prediction_categories_one_hot = learn.TTA(ds_type=DatasetType.Valid)
 best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
-print('best threshold / score: {:.3f} / {:.3f}'.format(best_threshold, best_score))
+print('best threshold / score: {:.3f} / {:.6f}'.format(best_threshold, best_score))
 
 test_prediction_logits, _ = learn.TTA(ds_type=DatasetType.Test)
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
@@ -279,7 +307,7 @@ learn.load('model_best_loss')
 
 valid_prediction_logits, valid_prediction_categories_one_hot = learn.TTA(ds_type=DatasetType.Valid)
 best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
-print('best threshold / score: {:.3f} / {:.3f}'.format(best_threshold, best_score))
+print('best threshold / score: {:.3f} / {:.6f}'.format(best_threshold, best_score))
 
 test_prediction_logits, _ = learn.TTA(ds_type=DatasetType.Test)
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
