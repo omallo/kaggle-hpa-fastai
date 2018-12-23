@@ -8,8 +8,8 @@ from torch.utils.data.sampler import WeightedRandomSampler
 
 input_dir = '/storage/kaggle/hpa'
 output_dir = '/artifacts'
-base_model_dir = '/storage/models/hpa/resnet34'
-image_size = 512
+base_model_dir = None  # '/storage/models/hpa/resnet34'
+image_size = 256
 batch_size = 32
 num_cycles = 3
 cycle_len = 10
@@ -225,6 +225,10 @@ def create_resnet(type, pretrained):
     return model
 
 
+def resnet18(pretrained):
+    return create_resnet('resnet18', pretrained)
+
+
 def resnet34(pretrained):
     return create_resnet('resnet34', pretrained)
 
@@ -354,7 +358,7 @@ if base_model_dir is not None:
 
 learn = create_cnn(
     data,
-    resnet34,
+    resnet18,
     pretrained=True,
     cut=-2,
     ps=0.5,
