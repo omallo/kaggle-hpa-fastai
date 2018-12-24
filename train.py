@@ -15,11 +15,11 @@ image_size = 512
 batch_size = 32
 num_cycles = 5
 cycle_len = 10
-use_sampling = True
+use_sampling = False
 use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
-do_train = False
+do_train = True
 
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
