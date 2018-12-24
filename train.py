@@ -2,6 +2,7 @@ import cv2
 from fastai import *
 from fastai.callbacks import *
 from fastai.vision import *
+from pretrainedmodels.models.nasnet import nasnetalarge
 from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
 from sklearn.metrics import f1_score as skl_f1_score
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -271,6 +272,23 @@ def create_senet(type, pretrained):
 
 def seresnext50(pretrained):
     return create_senet('seresnext50', pretrained)
+
+
+def create_nasnet(pretrained):
+    model = nasnetalarge(num_classes=1000, pretrained='imagenet' if pretrained else None)
+
+    conv1 = nn.Conv2d(in_channels=4, out_channels=96, kernel_size=3, padding=0, stride=2, bias=False)
+
+    nasnet_conv0_children = list(model.conv0.children())
+    conv1.weight.data[:, 0:3, :, :] = nasnet_conv0_children[0].weight.data
+    conv1.weight.data[:, 3, :, :] = nasnet_conv0_children[0].weight.data[:, 0, :, :].clone()
+    model.conv0 = nn.Sequential(*([conv1] + nasnet_conv0_children[1:]))
+
+    return model
+
+
+def nasnet(pretrained):
+    return create_nasnet(pretrained)
 
 
 def create_image(fn):
