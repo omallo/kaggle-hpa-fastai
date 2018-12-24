@@ -11,7 +11,7 @@ output_dir = '/artifacts'
 base_model_dir = None  # '/storage/models/hpa/resnet34'
 image_size = 256
 batch_size = 32
-num_cycles = 3
+num_cycles = 2
 cycle_len = 10
 use_progressive_image_resizing = False
 progressive_image_size_start = 128
@@ -358,7 +358,7 @@ if base_model_dir is not None:
 
 learn = create_cnn(
     data,
-    resnet18,
+    resnet34,
     pretrained=True,
     cut=-2,
     ps=0.5,
