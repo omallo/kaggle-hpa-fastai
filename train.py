@@ -4,6 +4,7 @@ from fastai.callbacks import *
 from fastai.vision import *
 from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
 from sklearn.metrics import f1_score as skl_f1_score
+from sklearn.model_selection import StratifiedShuffleSplit
 from torch.utils.data.sampler import WeightedRandomSampler
 
 input_dir = '/storage/kaggle/hpa'
@@ -297,9 +298,54 @@ def calculate_balance_weights(ds):
     prob_dict, prob_dict_bal = cls_wts(name_label_dict, mu=0.4)
     class_weights = np.array([prob_dict_bal[c] / prob_dict[c] for c in range(28)])
 
-    weights = [np.max(class_weights[np.asarray(list(map(int, y.obj)))]) for y in ds.y]
+    weights = []
+    labels = []
+    for y in ds.y:
+        w = class_weights[np.asarray(list(map(int, y.obj)))]
+        weights.append(np.max(w))
+        labels.append(np.argmax(w))
 
-    return weights, class_weights.tolist()
+    return weights, labels, class_weights.tolist()
+
+
+class StratifiedSampler(Sampler):
+    def __init__(self, class_vector, batch_size):
+        super().__init__(None)
+        self.class_vector = class_vector
+        self.batch_size = batch_size
+
+    def gen_sample_array(self):
+        n_splits = math.ceil(len(self.class_vector) / self.batch_size)
+        splitter = StratifiedShuffleSplit(n_splits=n_splits, test_size=0.5)
+        train_index, test_index = next(splitter.split(np.zeros(len(self.class_vector)), self.class_vector))
+        return np.hstack([train_index, test_index])
+
+    def __iter__(self):
+        return iter(self.gen_sample_array())
+
+    def __len__(self):
+        return len(self.class_vector)
+
+
+class HpaSampler(Sampler):
+    def __init__(self, weights, labels):
+        super().__init__(None)
+        self.labels = labels
+        self.weighted_random_sampler = WeightedRandomSampler(weights, len(weights))
+
+    def __iter__(self):
+        weighted_indexes = list(iter(self.weighted_random_sampler))
+        stratified_sampler = StratifiedSampler(self.labels, batch_size)
+        batch_indexes = list(iter(stratified_sampler))
+
+        assert len(weighted_indexes) == len(batch_indexes)
+
+        final_indexes = [w[b] for w, b in zip(weighted_indexes, batch_indexes)]
+
+        return iter(final_indexes)
+
+    def __len__(self):
+        return len(self.weighted_random_sampler)
 
 
 class HpaImageDataBunch(ImageDataBunch):
@@ -313,7 +359,7 @@ class HpaImageDataBunch(ImageDataBunch):
         datasets = cls._init_ds(train_ds, valid_ds, test_ds)
         val_bs = bs
 
-        train_weights, _ = calculate_balance_weights(train_ds)
+        train_weights, train_weight_labels, _ = calculate_balance_weights(train_ds)
         train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
 
         dls = [DataLoader(d, b, shuffle=s, sampler=p, drop_last=(s and b > 1), num_workers=num_workers) for d, b, s, p
