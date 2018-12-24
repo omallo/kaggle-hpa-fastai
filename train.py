@@ -15,11 +15,11 @@ image_size = 512
 batch_size = 32
 num_cycles = 5
 cycle_len = 10
-use_sampling = False
+use_sampling = True
 use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
-do_train = True
+do_train = False
 
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
@@ -484,7 +484,7 @@ if do_train:
     if not early_stopper.early_stopped:
         learn.fit_one_cycle(cycle_len, max_lr=slice(lr / 10, lr))
 
-print('best f1 score: {:.6f}'.format(best_f1_model_saver.best_global))
+    print('best f1 score: {:.6f}'.format(best_f1_model_saver.best_global))
 
 learn.load('model_best_f1')
 
