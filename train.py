@@ -364,7 +364,7 @@ learn = create_cnn(
     ps=0.5,
     split_on=resnet_split,
     path=Path(output_dir),
-    loss_func=F.binary_cross_entropy_with_logits,
+    loss_func=focal_loss,
     metrics=[F1Score()])
 
 early_stopper = \
