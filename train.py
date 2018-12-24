@@ -301,7 +301,7 @@ def calculate_balance_weights(ds):
     weights = []
     labels = []
     for y in ds.y:
-        w = class_weights[np.asarray(list(map(int, y.obj)))]
+        w = class_weights * y.data
         weights.append(np.max(w))
         labels.append(np.argmax(w))
 
@@ -340,7 +340,7 @@ class HpaSampler(Sampler):
 
         assert len(weighted_indexes) == len(batch_indexes)
 
-        final_indexes = [w[b] for w, b in zip(weighted_indexes, batch_indexes)]
+        final_indexes = [weighted_indexes[b] for b in batch_indexes]
 
         return iter(final_indexes)
 
