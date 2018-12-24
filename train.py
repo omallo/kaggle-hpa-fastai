@@ -295,7 +295,7 @@ def cls_wts(label_dict, mu=0.5):
 
 
 def calculate_balance_weights(ds):
-    prob_dict, prob_dict_bal = cls_wts(name_label_dict, mu=0.4)
+    prob_dict, prob_dict_bal = cls_wts(name_label_dict, mu=1.0)
     class_weights = np.array([prob_dict_bal[c] / prob_dict[c] for c in range(28)])
 
     weights = []
