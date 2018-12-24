@@ -490,6 +490,9 @@ valid_prediction_logits, valid_prediction_categories_one_hot = learn.TTA(ds_type
 best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
 print('best threshold / score: {:.3f} / {:.6f}'.format(best_threshold, best_score))
 np.save('{}/valid_prediction_logits_best_f1.npy'.format(output_dir), valid_prediction_logits.cpu().data.numpy())
+np.save(
+    '{}/valid_prediction_categories_one_hot_best_f1.npy'.format(output_dir),
+    valid_prediction_categories_one_hot.cpu().data.numpy())
 
 test_prediction_logits, _ = learn.TTA(ds_type=DatasetType.Test)
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
