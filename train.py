@@ -9,10 +9,10 @@ from torch.utils.data.sampler import WeightedRandomSampler
 
 input_dir = '/storage/kaggle/hpa'
 output_dir = '/artifacts'
-base_model_dir = None  # '/storage/models/hpa/resnet34'
-image_size = 256
+base_model_dir = '/storage/models/hpa/resnet34'
+image_size = 512
 batch_size = 32
-num_cycles = 2
+num_cycles = 5
 cycle_len = 10
 use_sampling = True
 use_progressive_image_resizing = False
