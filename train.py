@@ -10,7 +10,7 @@ from torch.utils.data.sampler import WeightedRandomSampler
 
 input_dir = '/storage/kaggle/hpa'
 output_dir = '/artifacts'
-base_model_dir = '/storage/models/hpa/resnet34'
+base_model_dir = '/storage/models/hpa/resnet34_weighted'
 image_size = 512
 batch_size = 32
 num_cycles = 5
@@ -19,6 +19,7 @@ use_sampling = True
 use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
+do_train = False
 
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
@@ -468,19 +469,20 @@ else:
     image_sizes = np.array([image_size] * num_cycles)
 print('Image sizes: {}'.format(image_sizes))
 
-if base_model_dir is None:
-    image_size = image_sizes[0]
-    learn.freeze()
-    learn.fit(3, lr=lr)
+if do_train:
+    if base_model_dir is None:
+        image_size = image_sizes[0]
+        learn.freeze()
+        learn.fit(3, lr=lr)
 
-learn.unfreeze()
-for c in range(num_cycles):
-    image_size = image_sizes[c]
-    learn.fit_one_cycle(cycle_len, max_lr=lr)
-    if early_stopper.early_stopped:
-        break
-if not early_stopper.early_stopped:
-    learn.fit_one_cycle(cycle_len, max_lr=slice(lr / 10, lr))
+    learn.unfreeze()
+    for c in range(num_cycles):
+        image_size = image_sizes[c]
+        learn.fit_one_cycle(cycle_len, max_lr=lr)
+        if early_stopper.early_stopped:
+            break
+    if not early_stopper.early_stopped:
+        learn.fit_one_cycle(cycle_len, max_lr=slice(lr / 10, lr))
 
 print('best f1 score: {:.6f}'.format(best_f1_model_saver.best_global))
 
