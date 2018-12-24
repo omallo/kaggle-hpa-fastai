@@ -14,6 +14,7 @@ image_size = 256
 batch_size = 32
 num_cycles = 2
 cycle_len = 10
+use_sampling = True
 use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
@@ -295,15 +296,19 @@ def cls_wts(label_dict, mu=0.5):
 
 
 def calculate_balance_weights(ds):
-    prob_dict, prob_dict_bal = cls_wts(name_label_dict, mu=1.0)
+    prob_dict, prob_dict_bal = cls_wts(name_label_dict, mu=0.4)
     class_weights = np.array([prob_dict_bal[c] / prob_dict[c] for c in range(28)])
+    class_frequencies = np.array([name_label_dict[k][1] for k in sorted(name_label_dict.keys())])
 
     weights = []
     labels = []
     for y in ds.y:
         w = class_weights * y.data
         weights.append(np.max(w))
-        labels.append(np.argmax(w))
+
+        f = class_frequencies * y.data
+        f[f == 0] = 1000000
+        labels.append(np.argmin(f))
 
     return weights, labels, class_weights.tolist()
 
@@ -330,12 +335,15 @@ class StratifiedSampler(Sampler):
 class HpaSampler(Sampler):
     def __init__(self, weights, labels):
         super().__init__(None)
+        self.weights = weights
         self.labels = labels
-        self.weighted_random_sampler = WeightedRandomSampler(weights, len(weights))
 
     def __iter__(self):
-        weighted_indexes = list(iter(self.weighted_random_sampler))
-        stratified_sampler = StratifiedSampler(self.labels, batch_size)
+        weighted_random_sampler = WeightedRandomSampler(self.weights, len(self.weights))
+        weighted_indexes = list(iter(weighted_random_sampler))
+        weighted_labels = [self.labels[i] for i in weighted_indexes]
+
+        stratified_sampler = StratifiedSampler(weighted_labels, batch_size)
         batch_indexes = list(iter(stratified_sampler))
 
         assert len(weighted_indexes) == len(batch_indexes)
@@ -345,7 +353,7 @@ class HpaSampler(Sampler):
         return iter(final_indexes)
 
     def __len__(self):
-        return len(self.weighted_random_sampler)
+        return len(self.weights)
 
 
 class HpaImageDataBunch(ImageDataBunch):
@@ -359,8 +367,11 @@ class HpaImageDataBunch(ImageDataBunch):
         datasets = cls._init_ds(train_ds, valid_ds, test_ds)
         val_bs = bs
 
-        train_weights, train_weight_labels, _ = calculate_balance_weights(train_ds)
-        train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
+        if use_sampling:
+            train_weights, train_weight_labels, _ = calculate_balance_weights(train_ds)
+            train_sampler = WeightedRandomSampler(train_weights, len(train_weights))
+        else:
+            train_sampler = None
 
         dls = [DataLoader(d, b, shuffle=s, sampler=p, drop_last=(s and b > 1), num_workers=num_workers) for d, b, s, p
                in
