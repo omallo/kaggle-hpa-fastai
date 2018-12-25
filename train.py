@@ -497,7 +497,7 @@ learn = create_cnn(
 
 early_stopper = \
     MultiTrainEarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=cycle_len, min_delta=1e-3)
-best_f1_model_saver = MultiTrainSaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
+best_f1_model_saver = MultiTrainSaveModelCallback(learn, monitor='f1_score', mode='max', name='model')
 mixup = MixUpCallback(learn, alpha=0.4, stack_x=False, stack_y=False)  # stack_y=True leads to error
 
 learn.callbacks = [
@@ -509,7 +509,7 @@ learn.callbacks = [
 # print(learn.summary)
 
 if base_model_dir is not None:
-    learn.load('model_best_f1')
+    learn.load('model')
 
 # learn.lr_find()
 # learn.recorder.plot()
@@ -537,7 +537,7 @@ if do_train:
 
     print('best f1 score: {:.6f}'.format(best_f1_model_saver.best_global))
 
-learn.load('model_best_f1')
+learn.load('model')
 
 valid_prediction_logits, valid_prediction_categories_one_hot = learn.TTA(ds_type=DatasetType.Valid)
 np.save('{}/valid_prediction_logits.npy'.format(output_dir), valid_prediction_logits.cpu().data.numpy())
