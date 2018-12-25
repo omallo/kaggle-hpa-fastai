@@ -407,7 +407,12 @@ class HpaImageItemList(ImageItemList):
 
 
 protein_stats = ([0.08069, 0.05258, 0.05487, 0.08282], [0.13704, 0.10145, 0.15313, 0.13814])
-tfms = get_transforms(flip_vert=True, xtra_tfms=zoom_crop(scale=(0.8, 1.2), do_rand=True))
+
+tfms = get_transforms(
+    flip_vert=True,
+    max_rotate=20,
+    max_zoom=1.2,
+    xtra_tfms=zoom_crop(scale=(0.8, 1.2), do_rand=True))
 
 test_images = (
     HpaImageItemList
