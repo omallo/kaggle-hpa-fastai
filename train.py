@@ -275,6 +275,10 @@ def seresnext50(pretrained):
     return create_senet('seresnext50', pretrained)
 
 
+def senet(pretrained):
+    return create_senet('senet154', pretrained)
+
+
 def create_nasnet(pretrained):
     model = nasnetalarge(num_classes=1000, pretrained='imagenet' if pretrained else None)
 
@@ -462,7 +466,7 @@ if base_model_dir is not None:
 
 learn = create_cnn(
     data,
-    senet154,
+    senet,
     pretrained=True,
     cut=-3,
     ps=0.5,
