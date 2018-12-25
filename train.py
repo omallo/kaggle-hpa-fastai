@@ -478,7 +478,8 @@ mixup = MixUpCallback(learn, alpha=0.4, stack_x=False, stack_y=False),  # stack_
 
 learn.callbacks = [
     early_stopper,
-    best_f1_model_saver
+    best_f1_model_saver,
+    mixup
 ]
 
 # print(learn.summary)
