@@ -548,12 +548,12 @@ np.save('{}/test_prediction_logits.npy'.format(output_dir), test_prediction_logi
 
 best_threshold = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot, per_class=False)
 best_score = f1_score(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
-print('best threshold / score: {:.3f} / {:.6f}'.format(best_threshold, best_score))
+print('best threshold / score: {} / {:.6f}'.format(best_threshold, best_score))
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
 write_submission(test_prediction_categories, '{}/submission_single_threshold.csv'.format(output_dir))
 
 best_threshold = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot, per_class=True)
 best_score = f1_score(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
-print('best threshold / score: {:.3f} / {:.6f}'.format(best_threshold, best_score))
+print('best threshold / score: {} / {:.6f}'.format(best_threshold, best_score))
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
 write_submission(test_prediction_categories, '{}/submission_class_threshold.csv'.format(output_dir))
