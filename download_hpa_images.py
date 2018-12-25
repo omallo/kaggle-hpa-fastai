@@ -45,10 +45,10 @@ def do_download():
 def do_analyze():
     colors = ['red', 'green', 'blue', 'yellow']
     id_colors = {}
-    for f in glob.glob('../../hpa/train/*.png'):
+    for f in glob.glob('/storage/kaggle/hpa_external/images/*.jpg'):
         b = os.path.basename(f)
         for c in colors:
-            s = '_{}.png'.format(c)
+            s = '_{}.jpg'.format(c)
             if b.endswith(s):
                 id = b[:-len(s)]
                 ic = id_colors.setdefault(id, [])
