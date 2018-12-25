@@ -19,7 +19,7 @@ use_sampling = False
 use_progressive_image_resizing = True
 progressive_image_size_start = 128
 progressive_image_size_end = 512
-do_train = False
+do_train = True
 
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
