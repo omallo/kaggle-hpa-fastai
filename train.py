@@ -1,5 +1,6 @@
 import cv2
 import scipy
+import torchvision
 from fastai import *
 from fastai.callbacks import *
 from fastai.vision import *
@@ -447,8 +448,18 @@ def shuffle_tfm(image, **kwargs):
         dst_x = int(c // 3) * cell_size
         dst_y = int(c % 3) * cell_size
 
-        dst_image[:, dst_x:dst_x + cell_size, dst_y:dst_y + cell_size] = \
-            image[:, src_x:src_x + cell_size, src_y:src_y + cell_size]
+        cell = image[:, src_x:src_x + cell_size, src_y:src_y + cell_size]
+
+        cell_pil = torchvision.transforms.functional.to_pil_image(cell)
+        if np.random.rand() < 0.5:
+            cell_pil = torchvision.transforms.functional.hflip(cell_pil)
+        if np.random.rand() < 0.5:
+            cell_pil = torchvision.transforms.functional.vflip(cell_pil)
+        if np.random.rand() < 0.5:
+            cell_pil = torchvision.transforms.functional.rotate(cell_pil, angle=np.random.choice([90, 180, 270]))
+        cell = torchvision.transforms.functional.to_tensor(cell_pil)
+
+        dst_image[:, dst_x:dst_x + cell_size, dst_y:dst_y + cell_size] = cell
 
     return dst_image
 
