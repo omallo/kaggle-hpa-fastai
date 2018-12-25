@@ -1,4 +1,5 @@
 import cv2
+import scipy
 from fastai import *
 from fastai.callbacks import *
 from fastai.vision import *
@@ -199,13 +200,31 @@ def calculate_categories(prediction_logits, threshold):
     return [np.squeeze(np.argwhere(p > threshold), axis=1) for p in predictions_np]
 
 
-def calculate_best_threshold(prediction_logits, targets):
-    thresholds = np.linspace(0, 1, 51)
-    scores = [f1_score(prediction_logits, targets, threshold=t) for t in thresholds]
+def sigmoid_np(x):
+    return 1.0 / (1.0 + np.exp(-x))
 
-    best_score_index = np.argmax(scores)
 
-    return thresholds[best_score_index], scores[best_score_index], scores
+def f1_soft(prediction_logits, targets, th=0.0, d=25.0):
+    prediction_logits = sigmoid_np(d * (prediction_logits - th))
+    targets = targets.astype(np.float)
+    score = 2.0 * (prediction_logits * targets).sum(axis=0) / ((prediction_logits + targets).sum(axis=0) + 1e-6)
+    return score
+
+
+def calculate_best_threshold(prediction_logits, targets, per_class):
+    if per_class:
+        prediction_logits = prediction_logits.cpu().data.numpy()
+        targets = targets.cpu().data.numpy()
+        params = np.zeros(28)
+        wd = 1e-5
+        error = lambda p: np.concatenate((f1_soft(prediction_logits, targets, p) - 1.0, wd * p), axis=None)
+        p, success = scipy.optimize.leastsq(error, params)
+        return p
+    else:
+        thresholds = np.linspace(0, 1, 51)
+        scores = [f1_score(prediction_logits, targets, threshold=t) for t in thresholds]
+        best_score_index = np.argmax(scores)
+        return thresholds[best_score_index]
 
 
 def create_resnet(type, pretrained):
@@ -521,14 +540,20 @@ if do_train:
 learn.load('model_best_f1')
 
 valid_prediction_logits, valid_prediction_categories_one_hot = learn.TTA(ds_type=DatasetType.Valid)
-best_threshold, best_score, _ = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot)
-print('best threshold / score: {:.3f} / {:.6f}'.format(best_threshold, best_score))
-np.save('{}/valid_prediction_logits_best_f1.npy'.format(output_dir), valid_prediction_logits.cpu().data.numpy())
-np.save(
-    '{}/valid_prediction_categories_one_hot_best_f1.npy'.format(output_dir),
-    valid_prediction_categories_one_hot.cpu().data.numpy())
+np.save('{}/valid_prediction_logits.npy'.format(output_dir), valid_prediction_logits.cpu().data.numpy())
+np.save('{}/valid_prediction_categories.npy'.format(output_dir), valid_prediction_categories_one_hot.cpu().data.numpy())
 
 test_prediction_logits, _ = learn.TTA(ds_type=DatasetType.Test)
+np.save('{}/test_prediction_logits.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
+
+best_threshold = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot, per_class=False)
+best_score = f1_score(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
+print('best threshold / score: {:.3f} / {:.6f}'.format(best_threshold, best_score))
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
-write_submission(test_prediction_categories, '{}/submission_best_f1.csv'.format(output_dir))
-np.save('{}/test_prediction_logits_best_f1.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
+write_submission(test_prediction_categories, '{}/submission_single_threshold.csv'.format(output_dir))
+
+best_threshold = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot, per_class=True)
+best_score = f1_score(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
+print('best threshold / score: {:.3f} / {:.6f}'.format(best_threshold, best_score))
+test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
+write_submission(test_prediction_categories, '{}/submission_class_threshold.csv'.format(output_dir))
