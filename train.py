@@ -13,7 +13,7 @@ output_dir = '/artifacts'
 base_model_dir = None  # '/storage/models/hpa/resnet34'
 image_size = 512
 batch_size = 32
-num_cycles = 5
+num_cycles = 7
 cycle_len = 10
 use_sampling = False
 use_progressive_image_resizing = False
@@ -462,11 +462,11 @@ if base_model_dir is not None:
 
 learn = create_cnn(
     data,
-    resnet34,
+    senet154,
     pretrained=True,
-    cut=-2,
+    cut=-3,
     ps=0.5,
-    split_on=resnet_split,
+    # split_on=resnet_split,
     path=Path(output_dir),
     loss_func=focal_loss,
     metrics=[F1Score()])
