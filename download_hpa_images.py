@@ -17,9 +17,10 @@ def download(pid, sp, ep):
         for color in colors:
             img_path = img[0] + '/' + "_".join(img[1:]) + "_" + color + ".jpg"
             img_name = i + "_" + color + ".jpg"
-            img_url = v18_url + img_path
-            r = requests.get(img_url, allow_redirects=True)
-            open(DIR + img_name, 'wb').write(r.content)
+            if not os.path.isfile(DIR + img_name):
+                img_url = v18_url + img_path
+                r = requests.get(img_url, allow_redirects=True)
+                open(DIR + img_name, 'wb').write(r.content)
 
 
 def run_proc(name, sp, ep):
@@ -63,5 +64,5 @@ def do_analyze():
 
 
 if __name__ == "__main__":
-    # do_download()
+    do_download()
     do_analyze()
