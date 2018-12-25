@@ -10,7 +10,7 @@ from torch.utils.data.sampler import WeightedRandomSampler
 
 input_dir = '/storage/kaggle/hpa'
 output_dir = '/artifacts'
-base_model_dir = '/storage/models/hpa/resnet34_weighted'
+base_model_dir = None  # '/storage/models/hpa/resnet34'
 image_size = 512
 batch_size = 32
 num_cycles = 5
@@ -406,13 +406,36 @@ class HpaImageItemList(ImageItemList):
         return create_image(fn)
 
 
+def shuffle_tfm(image, **kwargs):
+    if np.random.rand() < 0.5:
+        return image
+
+    dst_image = image.clone()
+
+    shuffled_cells = np.arange(9)
+    np.random.shuffle(shuffled_cells)
+    cell_size = int(image.shape[1] // 3)
+
+    for i, c in enumerate(shuffled_cells):
+        src_x = int(i // 3) * cell_size
+        src_y = int(i % 3) * cell_size
+
+        dst_x = int(c // 3) * cell_size
+        dst_y = int(c % 3) * cell_size
+
+        dst_image[:, dst_x:dst_x + cell_size, dst_y:dst_y + cell_size] = \
+            image[:, src_x:src_x + cell_size, src_y:src_y + cell_size]
+
+    return dst_image
+
+
 protein_stats = ([0.08069, 0.05258, 0.05487, 0.08282], [0.13704, 0.10145, 0.15313, 0.13814])
 
 tfms = get_transforms(
     flip_vert=True,
     max_rotate=20,
     max_zoom=1.2,
-    xtra_tfms=zoom_crop(scale=(0.8, 1.2), do_rand=True))
+    xtra_tfms=[*zoom_crop(scale=(0.8, 1.2), do_rand=True), TfmPixel(shuffle_tfm)()])
 
 test_images = (
     HpaImageItemList
@@ -422,7 +445,7 @@ test_images = (
 data = (
     HpaImageItemList
         .from_csv(input_dir, 'train.csv', folder='train', create_func=create_image)
-        # .use_partial_data(sample_pct=0.005, seed=42)
+        .use_partial_data(sample_pct=0.005, seed=42)
         .random_split_by_pct(valid_pct=0.2, seed=42)
         .label_from_df(sep=' ', classes=[str(i) for i in range(28)])
         .transform(tfms)
