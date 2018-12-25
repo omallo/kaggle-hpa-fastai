@@ -17,30 +17,30 @@ def download(pid, sp, ep):
             img_path = img[0] + '/' + "_".join(img[1:]) + "_" + color + ".jpg"
             img_name = i + "_" + color + ".jpg"
             if not os.path.isfile(DIR + img_name):
-                print('fetching image "{}"'.format(img_name))
+                print('fetching image "{}"'.format(img_name), flush=True)
                 img_url = v18_url + img_path
                 r = requests.get(img_url, allow_redirects=True)
                 open(DIR + img_name, 'wb').write(r.content)
 
 
 def run_proc(name, sp, ep):
-    print('Run child process %s (%s) sp:%d ep: %d' % (name, os.getpid(), sp, ep))
+    print('Run child process %s (%s) sp:%d ep: %d' % (name, os.getpid(), sp, ep), flush=True)
     download(name, sp, ep)
-    print('Run child process %s done' % (name))
+    print('Run child process %s done' % (name), flush=True)
 
 
 def do_download():
-    print('Parent process %s.' % os.getpid())
+    print('Parent process %s.' % os.getpid(), flush=True)
     img_list = pd.read_csv("/storage/kaggle/hpa_external/HPAv18RBGY_wodpl.csv")['Id']
     list_len = len(img_list)
     process_num = 100
     p = Pool(process_num)
     for i in range(process_num):
         p.apply_async(run_proc, args=(str(i), int(i * list_len / process_num), int((i + 1) * list_len / process_num)))
-    print('Waiting for all subprocesses done...')
+    print('Waiting for all subprocesses done...', flush=True)
     p.close()
     p.join()
-    print('All subprocesses done.')
+    print('All subprocesses done.', flush=True)
 
 
 def do_analyze():
@@ -56,11 +56,11 @@ def do_analyze():
                 ic.append(c)
                 id_colors[id] = ic
 
-    print('found {} samples'.format(len(id_colors)))
+    print('found {} samples'.format(len(id_colors)), flush=True)
 
     for k, v in id_colors.items():
         if len(v) != len(colors):
-            print('sample "{}" only has colors {}'.format(k, v))
+            print('sample "{}" only has colors {}'.format(k, v), flush=True)
 
 
 if __name__ == "__main__":
