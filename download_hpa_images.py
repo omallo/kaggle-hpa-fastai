@@ -4,7 +4,6 @@ from multiprocessing.pool import Pool
 
 import pandas as pd
 import requests
-from tqdm import tqdm
 
 
 def download(pid, sp, ep):
@@ -12,12 +11,13 @@ def download(pid, sp, ep):
     DIR = "/storage/kaggle/hpa_external/images/"
     v18_url = 'http://v18.proteinatlas.org/images/'
     imgList = pd.read_csv("/storage/kaggle/hpa_external/HPAv18RBGY_wodpl.csv")
-    for i in tqdm(imgList['Id'][sp:ep], postfix=pid):
+    for i in imgList['Id'][sp:ep]:
         img = i.split('_')
         for color in colors:
             img_path = img[0] + '/' + "_".join(img[1:]) + "_" + color + ".jpg"
             img_name = i + "_" + color + ".jpg"
             if not os.path.isfile(DIR + img_name):
+                print('fetching image "{}"'.format(img_name))
                 img_url = v18_url + img_path
                 r = requests.get(img_url, allow_redirects=True)
                 open(DIR + img_name, 'wb').write(r.content)
