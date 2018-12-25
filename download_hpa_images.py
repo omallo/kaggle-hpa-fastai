@@ -1,3 +1,4 @@
+import glob
 import os
 from multiprocessing.pool import Pool
 
@@ -27,7 +28,7 @@ def run_proc(name, sp, ep):
     print('Run child process %s done' % (name))
 
 
-if __name__ == "__main__":
+def do_download():
     print('Parent process %s.' % os.getpid())
     img_list = pd.read_csv("/storage/kaggle/hpa_external/HPAv18RBGY_wodpl.csv")['Id']
     list_len = len(img_list)
@@ -39,3 +40,28 @@ if __name__ == "__main__":
     p.close()
     p.join()
     print('All subprocesses done.')
+
+
+def do_analyze():
+    colors = ['red', 'green', 'blue', 'yellow']
+    id_colors = {}
+    for f in glob.glob('../../hpa/train/*.png'):
+        b = os.path.basename(f)
+        for c in colors:
+            s = '_{}.png'.format(c)
+            if b.endswith(s):
+                id = b[:-len(s)]
+                ic = id_colors.setdefault(id, [])
+                ic.append(c)
+                id_colors[id] = ic
+
+    print('found {} samples'.format(len(id_colors)))
+
+    for k, v in id_colors.items():
+        if len(v) != len(colors):
+            print('sample "{}" only has colors {}'.format(k, v))
+
+
+if __name__ == "__main__":
+    # do_download()
+    do_analyze()
