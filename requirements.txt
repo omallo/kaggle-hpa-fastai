@@ -1,4 +1,5 @@
 fastai==1.0.37
+imagehash==4.0
 opencv-python==3.4.3.18
 pretrainedmodels==0.7.4
 scikit_learn==0.19.2
