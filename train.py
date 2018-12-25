@@ -13,6 +13,7 @@ output_dir = '/artifacts'
 base_model_dir = None  # '/storage/models/hpa/resnet34'
 image_size = 512
 batch_size = 16
+lr = 0.001
 num_cycles = 7
 cycle_len = 10
 use_sampling = False
@@ -493,8 +494,6 @@ if base_model_dir is not None:
 
 # learn.lr_find()
 # learn.recorder.plot()
-
-lr = 0.003
 
 if use_progressive_image_resizing:
     image_sizes = np.linspace(progressive_image_size_start, progressive_image_size_end, num_cycles, dtype=np.int32)
