@@ -449,7 +449,7 @@ test_images = (
 data = (
     HpaImageItemList
         .from_csv(input_dir, 'train.csv', folder='train', create_func=create_image)
-        .use_partial_data(sample_pct=0.005, seed=42)
+        # .use_partial_data(sample_pct=0.005, seed=42)
         .random_split_by_pct(valid_pct=0.2, seed=42)
         .label_from_df(sep=' ', classes=[str(i) for i in range(28)])
         .transform(tfms)
@@ -478,7 +478,7 @@ learn = create_cnn(
 early_stopper = \
     MultiTrainEarlyStoppingCallback(learn, monitor='f1_score', mode='max', patience=cycle_len, min_delta=1e-3)
 best_f1_model_saver = MultiTrainSaveModelCallback(learn, monitor='f1_score', mode='max', name='model_best_f1')
-mixup = MixUpCallback(learn, alpha=0.4, stack_x=False, stack_y=False),  # stack_y=True leads to error
+mixup = MixUpCallback(learn, alpha=0.4, stack_x=False, stack_y=False)  # stack_y=True leads to error
 
 learn.callbacks = [
     early_stopper,
