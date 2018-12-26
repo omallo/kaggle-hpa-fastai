@@ -72,6 +72,10 @@ def load_image(file_path_base, image_size):
 
 def load_image_channel(file_path, image_size):
     channel = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+    if channel is None:
+        error_message = 'could not load image: "{}"'.format(file_path)
+        print(error_message, flush=True)
+        raise Exception(error_message)
     if channel.shape[0] != image_size:
         channel = cv2.resize(channel, (image_size, image_size), interpolation=cv2.INTER_AREA)
     return channel
