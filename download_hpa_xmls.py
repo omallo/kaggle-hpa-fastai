@@ -101,5 +101,7 @@ if __name__ == "__main__":
                 sample_targets.append(sample[1])
     print(len(sample_ids))
 
-    approved_df = pd.DataFrame(index=sample_ids, data={'Target': [' '.join(list(map(str, t))) for t in sample_targets]})
-    approved_df.to_csv('../../hpa/train_extended_approved.csv', index_label='Id')
+    train_df = pd.read_csv('../../hpa/train.csv', index_col='Id')
+    external_df = pd.DataFrame(index=sample_ids, data={'Target': [' '.join(list(map(str, t))) for t in sample_targets]})
+    combined_df = pd.concat([train_df, external_df])
+    combined_df.to_csv('../../hpa/train_extended.csv', index_label='Id')
