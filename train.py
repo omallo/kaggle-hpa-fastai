@@ -11,6 +11,7 @@ from sklearn.model_selection import StratifiedShuffleSplit, train_test_split
 from torch.utils.data.sampler import WeightedRandomSampler
 
 input_dir = '/storage/kaggle/hpa'
+input_dir_external = '/storage/kaggle/hpa_external'
 output_dir = '/artifacts'
 base_model_dir = None  # '/storage/models/hpa/resnet34'
 image_size = 256
@@ -23,6 +24,7 @@ use_progressive_image_resizing = True
 progressive_image_size_start = 128
 progressive_image_size_end = 512
 do_train = True
+use_extended_train_set = False
 
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
@@ -58,11 +60,13 @@ name_label_dict = {
 n_labels = 50782
 
 
-def load_image(base_name, image_size):
-    r = load_image_channel('{}_red.png'.format(base_name), image_size)
-    g = load_image_channel('{}_green.png'.format(base_name), image_size)
-    b = load_image_channel('{}_blue.png'.format(base_name), image_size)
-    y = load_image_channel('{}_yellow.png'.format(base_name), image_size)
+def load_image(file_path_base, image_size):
+    if not os.path.isfile('{}_red.png'.format(file_path_base)):
+        file_path_base = '{}/images/{}'.format(input_dir_external, os.path.basename(file_path_base))
+    r = load_image_channel('{}_red.png'.format(file_path_base), image_size)
+    g = load_image_channel('{}_green.png'.format(file_path_base), image_size)
+    b = load_image_channel('{}_blue.png'.format(file_path_base), image_size)
+    y = load_image_channel('{}_yellow.png'.format(file_path_base), image_size)
     return np.stack([r, g, b, y], axis=2)
 
 
@@ -466,8 +470,11 @@ def shuffle_tfm(image, **kwargs):
 
 def split_train_set():
     num_train_samples = 31072
-    split = [False] * num_train_samples
+    num_extended_train_samples = 105678
+
+    split = [False] * (num_extended_train_samples if use_extended_train_set else num_train_samples)
     _, valid_indexes = train_test_split(list(range(num_train_samples)), test_size=0.2, random_state=42)
+
     for i in valid_indexes:
         split[i] = True
     return split
@@ -486,9 +493,11 @@ test_images = (
         .from_csv(input_dir, 'sample_submission.csv', folder='test', create_func=create_image)
 )
 
+train_csv = 'train_extended.csv' if use_extended_train_set else 'train.csv'
+
 data = (
     HpaImageItemList
-        .from_csv(input_dir, 'train.csv', folder='train', create_func=create_image)
+        .from_csv(input_dir, train_csv, folder='train', create_func=create_image)
         # .use_partial_data(sample_pct=0.005, seed=42)
         .split_by_valid_func(split_train_set)
         .label_from_df(sep=' ', classes=[str(i) for i in range(28)])
