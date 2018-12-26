@@ -19,4 +19,4 @@ function install_dependencies() {
 
 install_dependencies
 
-python download_hpa_images.py
+python download_hpa_images.py | tee -a /artifacts/out.log
