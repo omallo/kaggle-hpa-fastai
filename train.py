@@ -522,6 +522,10 @@ data = (
         .normalize(protein_stats)
 )
 
+print('train dataset size: {}'.format(len(data.train_ds)), flush=True)
+print('valid dataset size: {}'.format(len(data.valid_ds)), flush=True)
+print('test dataset size: {}'.format(len(data.test_ds)), flush=True)
+
 # data.show_batch(rows=3)
 
 if base_model_dir is not None:
