@@ -61,12 +61,14 @@ n_labels = 50782
 
 
 def load_image(file_path_base, image_size):
+    extension = 'png'
     if not os.path.isfile('{}_red.png'.format(file_path_base)):
         file_path_base = '{}/images/{}'.format(input_dir_external, os.path.basename(file_path_base))
-    r = load_image_channel('{}_red.png'.format(file_path_base), image_size)
-    g = load_image_channel('{}_green.png'.format(file_path_base), image_size)
-    b = load_image_channel('{}_blue.png'.format(file_path_base), image_size)
-    y = load_image_channel('{}_yellow.png'.format(file_path_base), image_size)
+        extension = 'jpg'
+    r = load_image_channel('{}_red.{}'.format(file_path_base, extension), image_size)
+    g = load_image_channel('{}_green.{}'.format(file_path_base, extension), image_size)
+    b = load_image_channel('{}_blue.{}'.format(file_path_base, extension), image_size)
+    y = load_image_channel('{}_yellow.{}'.format(file_path_base, extension), image_size)
     return np.stack([r, g, b, y], axis=2)
 
 

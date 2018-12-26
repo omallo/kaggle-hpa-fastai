@@ -10,16 +10,16 @@ from PIL import Image
 
 def download(pid, sp, ep):
     colors = ['red', 'green', 'blue', 'yellow']
-    DIR = "/storage/kaggle/hpa_external/images/"
+    DIR = "../../hpa_external/images/"
     v18_url = 'http://v18.proteinatlas.org/images/'
-    imgList = pd.read_csv("/storage/kaggle/hpa_external/HPAv18RBGY_wodpl.csv")
+    imgList = pd.read_csv("../../hpa_external/HPAv18RBGY_wodpl.csv")
     for i in imgList['Id'][sp:ep]:
         img = i.split('_')
         for color in colors:
             img_path = img[0] + '/' + "_".join(img[1:]) + "_" + color + ".jpg"
             img_name = i + "_" + color + ".jpg"
             if not os.path.isfile(DIR + img_name):
-                print('fetching image "{}"'.format(img_name), flush=True)
+                # print('fetching image "{}"'.format(img_name), flush=True)
                 img_url = v18_url + img_path
                 r = requests.get(img_url, allow_redirects=True)
                 open(DIR + img_name, 'wb').write(r.content)
@@ -33,7 +33,7 @@ def run_proc(name, sp, ep):
 
 def do_download():
     print('Parent process %s.' % os.getpid(), flush=True)
-    img_list = pd.read_csv("/storage/kaggle/hpa_external/HPAv18RBGY_wodpl.csv")['Id']
+    img_list = pd.read_csv("../../hpa_external/HPAv18RBGY_wodpl.csv")['Id']
     list_len = len(img_list)
     process_num = 100
     p = Pool(process_num)
@@ -48,7 +48,7 @@ def do_download():
 def do_analyze():
     colors = ['red', 'green', 'blue', 'yellow']
     id_colors = {}
-    for f in glob.glob('/storage/kaggle/hpa_external/images/*.jpg'):
+    for f in glob.glob('../../hpa_external/images/*.jpg'):
         b = os.path.basename(f)
         for c in colors:
             s = '_{}.jpg'.format(c)
@@ -76,7 +76,7 @@ def hash_images(file_names):
 
 def do_find_similar_images():
     print('hashing external images', flush=True)
-    external_imgs = glob.glob('/storage/kaggle/hpa_external/images/*_green.jpg')
+    external_imgs = glob.glob('../../hpa_external/images/*_green.jpg')
     external_hashes = hash_images(external_imgs)
     images = {}
     for img, hash in zip(external_imgs, external_hashes):
@@ -85,7 +85,7 @@ def do_find_similar_images():
 
     print('finding duplicates in train set', flush=True)
     train_duplicates = []
-    train_imgs = glob.glob('/storage/kaggle/hpa/train/*_green.png')
+    train_imgs = glob.glob('../../hpa/train/*_green.png')
     train_hashes = hash_images(train_imgs)
     for img, hash in zip(train_imgs, train_hashes):
         id = os.path.basename(img)[:-len('_green.png')]
@@ -95,7 +95,7 @@ def do_find_similar_images():
 
     print('finding duplicates in test set', flush=True)
     test_duplicates = []
-    test_imgs = glob.glob('/storage/kaggle/hpa/test/*_green.png')
+    test_imgs = glob.glob('../../hpa/test/*_green.png')
     test_hashes = hash_images(test_imgs)
     for img, hash in zip(test_imgs, test_hashes):
         id = os.path.basename(img)[:-len('_green.png')]
@@ -105,6 +105,6 @@ def do_find_similar_images():
 
 
 if __name__ == "__main__":
-    # do_download()
-    # do_analyze()
-    do_find_similar_images()
+    do_download()
+    do_analyze()
+    # do_find_similar_images()
