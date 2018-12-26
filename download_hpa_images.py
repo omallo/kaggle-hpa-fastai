@@ -5,6 +5,8 @@ from multiprocessing.pool import Pool
 import pandas as pd
 import requests
 
+from find_similar_images import find_similar_images
+
 
 def download(pid, sp, ep):
     colors = ['red', 'green', 'blue', 'yellow']
@@ -63,6 +65,15 @@ def do_analyze():
             print('sample "{}" only has colors {}'.format(k, v), flush=True)
 
 
+def do_find_similar_images():
+    print('find similar images in train set')
+    find_similar_images(['/storage/kaggle/hpa/train', '/storage/kaggle/hpa_external/images'])
+
+    print('find similar images in test set')
+    find_similar_images(['/storage/kaggle/hpa/test', '/storage/kaggle/hpa_external/images'])
+
+
 if __name__ == "__main__":
-    do_download()
-    do_analyze()
+    # do_download()
+    # do_analyze()
+    do_find_similar_images()
