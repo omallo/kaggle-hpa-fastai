@@ -13,8 +13,9 @@ def find_similar_images(userpaths, hashfunc=imagehash.average_hash):
     import os
     def is_image(filename):
         f = filename.lower()
-        return f.endswith(".png") or f.endswith(".jpg") or \
-               f.endswith(".jpeg") or f.endswith(".bmp") or f.endswith(".gif") or '.jpg' in f
+        return 'green' in f and (
+            f.endswith(".png") or f.endswith(".jpg") or f.endswith(".jpeg") or f.endswith(".bmp") or f.endswith(
+                ".gif") or '.jpg' in f)
 
     image_filenames = []
     for userpath in userpaths:
