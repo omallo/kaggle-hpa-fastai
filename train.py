@@ -13,9 +13,9 @@ from torch.utils.data.sampler import WeightedRandomSampler
 input_dir = '/storage/kaggle/hpa'
 output_dir = '/artifacts'
 base_model_dir = None  # '/storage/models/hpa/resnet34'
-image_size = 512
-batch_size = 16
-lr = 0.001
+image_size = 256
+batch_size = 32
+lr = 0.003
 num_cycles = 7
 cycle_len = 10
 use_sampling = False
@@ -497,11 +497,11 @@ if base_model_dir is not None:
 
 learn = create_cnn(
     data,
-    senet,
+    resnet34,
     pretrained=True,
-    cut=-3,
+    cut=-2,
     ps=0.5,
-    # split_on=resnet_split,
+    split_on=resnet_split,
     path=Path(output_dir),
     loss_func=focal_loss,
     metrics=[F1Score()])
