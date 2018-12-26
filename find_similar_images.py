@@ -26,15 +26,12 @@ def find_similar_images(userpaths, hashfunc=imagehash.average_hash):
             hash = hashfunc(Image.open(img))
         except Exception as e:
             print('Problem:', e, 'with', img)
-        if hash in images:
-            print(img, '  already exists as', ' '.join(images[hash]))
-            if 'dupPictures' in img:
-                print('rm -v', img)
-        images[hash] = images.get(hash, []) + [img]
+        id = os.path.basename(img)[:-len('_green.png')]
+        images[hash] = images.get(hash, []) + [id]
 
-        # for k, img_list in six.iteritems(images):
-        #    if len(img_list) > 1:
-        #        print(" ".join(img_list))
+    for hash, ids in images.items():
+        if len(ids) > 1:
+            print(','.join(ids))
 
 
 if __name__ == '__main__':
