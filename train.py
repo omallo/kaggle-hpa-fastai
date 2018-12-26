@@ -7,7 +7,7 @@ from fastai.vision import *
 from pretrainedmodels.models.nasnet import nasnetalarge
 from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
 from sklearn.metrics import f1_score as skl_f1_score
-from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import StratifiedShuffleSplit, train_test_split
 from torch.utils.data.sampler import WeightedRandomSampler
 
 input_dir = '/storage/kaggle/hpa'
@@ -16,7 +16,7 @@ base_model_dir = None  # '/storage/models/hpa/resnet34'
 image_size = 256
 batch_size = 32
 lr = 0.003
-num_cycles = 7
+num_cycles = 3
 cycle_len = 10
 use_sampling = False
 use_progressive_image_resizing = True
@@ -464,6 +464,15 @@ def shuffle_tfm(image, **kwargs):
     return dst_image
 
 
+def split_train_set():
+    num_train_samples = 31072
+    split = [False] * num_train_samples
+    _, valid_indexes = train_test_split(list(range(num_train_samples)), test_size=0.2, random_state=42)
+    for i in valid_indexes:
+        split[i] = True
+    return split
+
+
 protein_stats = ([0.08069, 0.05258, 0.05487, 0.08282], [0.13704, 0.10145, 0.15313, 0.13814])
 
 tfms = get_transforms(
@@ -481,7 +490,7 @@ data = (
     HpaImageItemList
         .from_csv(input_dir, 'train.csv', folder='train', create_func=create_image)
         # .use_partial_data(sample_pct=0.005, seed=42)
-        .random_split_by_pct(valid_pct=0.2, seed=42)
+        .split_by_valid_func(split_train_set)
         .label_from_df(sep=' ', classes=[str(i) for i in range(28)])
         .transform(tfms)
         .add_test(test_images)
