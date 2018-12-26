@@ -5,8 +5,7 @@ from multiprocessing.pool import Pool
 import imagehash
 import pandas as pd
 import requests
-
-from find_similar_images import find_similar_images
+from PIL import Image
 
 
 def download(pid, sp, ep):
@@ -66,16 +65,31 @@ def do_analyze():
             print('sample "{}" only has colors {}'.format(k, v), flush=True)
 
 
-def do_find_similar_images():
-    print('find similar images in train set', flush=True)
-    find_similar_images(
-        ['/storage/kaggle/hpa/train', '/storage/kaggle/hpa_external/images'],
-        hashfunc=imagehash.phash)
+def do_find_similar_images(hashfunc=imagehash.phash):
+    print('hashing external images', flush=True)
+    images = {}
+    for img in glob.glob('/storage/kaggle/hpa_external/images/*_green.jpg'):
+        id = os.path.basename(img)[:-len('_green.jpg')]
+        hash = hashfunc(Image.open(img))
+        images[hash] = id
 
-    print('find similar images in test set', flush=True)
-    find_similar_images(
-        ['/storage/kaggle/hpa/test', '/storage/kaggle/hpa_external/images'],
-        hashfunc=imagehash.phash)
+    print('finding duplicates in train set', flush=True)
+    train_duplicates = []
+    for img in glob.glob('/storage/kaggle/hpa/train/*_green.png'):
+        id = os.path.basename(img)[:-len('_green.png')]
+        hash = hashfunc(Image.open(img))
+        if hash in images:
+            train_duplicates.append(','.join([images[hash], id]))
+    print('\n'.join(train_duplicates), flush=True)
+
+    print('finding duplicates in test set', flush=True)
+    test_duplicates = []
+    for img in glob.glob('/storage/kaggle/hpa/test/*_green.png'):
+        id = os.path.basename(img)[:-len('_green.png')]
+        hash = hashfunc(Image.open(img))
+        if hash in images:
+            test_duplicates.append(','.join([images[hash], id]))
+    print('\n'.join(test_duplicates), flush=True)
 
 
 if __name__ == "__main__":
