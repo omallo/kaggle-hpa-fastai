@@ -507,7 +507,7 @@ test_images = (
         .from_csv(input_dir, 'sample_submission.csv', folder='test', create_func=create_image)
 )
 
-train_csv = 'train_extended.csv' if use_extended_train_set else 'train.csv'
+train_csv = 'train_extended_approved.csv' if use_extended_train_set else 'train.csv'
 
 data = (
     HpaImageItemList
