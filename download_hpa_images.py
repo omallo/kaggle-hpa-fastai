@@ -65,30 +65,42 @@ def do_analyze():
             print('sample "{}" only has colors {}'.format(k, v), flush=True)
 
 
-def do_find_similar_images(hashfunc=imagehash.phash):
+def hash_image(file_name):
+    return imagehash.phash(Image.open(file_name))
+
+
+def hash_images(file_names):
+    with Pool(16) as pool:
+        return [h for h in pool.map(hash_image, file_names)]
+
+
+def do_find_similar_images():
     print('hashing external images', flush=True)
+    external_imgs = glob.glob('/storage/kaggle/hpa_external/images/*_green.jpg')
+    external_hashes = hash_images(external_imgs)
     images = {}
-    for img in glob.glob('/storage/kaggle/hpa_external/images/*_green.jpg'):
+    for img, hash in zip(external_imgs, external_hashes):
         id = os.path.basename(img)[:-len('_green.jpg')]
-        hash = hashfunc(Image.open(img))
-        images[hash] = id
+        images[hash] = images.get(hash, []) + [id]
 
     print('finding duplicates in train set', flush=True)
     train_duplicates = []
-    for img in glob.glob('/storage/kaggle/hpa/train/*_green.png'):
+    train_imgs = glob.glob('/storage/kaggle/hpa/train/*_green.png')
+    train_hashes = hash_images(train_imgs)
+    for img, hash in zip(train_imgs, train_hashes):
         id = os.path.basename(img)[:-len('_green.png')]
-        hash = hashfunc(Image.open(img))
         if hash in images:
-            train_duplicates.append(','.join([images[hash], id]))
+            train_duplicates.append(','.join([*images[hash], id]))
     print('\n'.join(train_duplicates), flush=True)
 
     print('finding duplicates in test set', flush=True)
     test_duplicates = []
-    for img in glob.glob('/storage/kaggle/hpa/test/*_green.png'):
+    test_imgs = glob.glob('/storage/kaggle/hpa/test/*_green.png')
+    test_hashes = hash_images(test_imgs)
+    for img, hash in zip(test_imgs, test_hashes):
         id = os.path.basename(img)[:-len('_green.png')]
-        hash = hashfunc(Image.open(img))
         if hash in images:
-            test_duplicates.append(','.join([images[hash], id]))
+            test_duplicates.append(','.join([*images[hash], id]))
     print('\n'.join(test_duplicates), flush=True)
 
 
