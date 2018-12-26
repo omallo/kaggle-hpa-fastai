@@ -2,6 +2,7 @@ import glob
 import os
 from multiprocessing.pool import Pool
 
+import imagehash
 import pandas as pd
 import requests
 
@@ -66,11 +67,15 @@ def do_analyze():
 
 
 def do_find_similar_images():
-    print('find similar images in train set')
-    find_similar_images(['/storage/kaggle/hpa/train', '/storage/kaggle/hpa_external/images'])
+    print('find similar images in train set', flush=True)
+    find_similar_images(
+        ['/storage/kaggle/hpa/train', '/storage/kaggle/hpa_external/images'],
+        hashfunc=imagehash.phash)
 
-    print('find similar images in test set')
-    find_similar_images(['/storage/kaggle/hpa/test', '/storage/kaggle/hpa_external/images'])
+    print('find similar images in test set', flush=True)
+    find_similar_images(
+        ['/storage/kaggle/hpa/test', '/storage/kaggle/hpa_external/images'],
+        hashfunc=imagehash.phash)
 
 
 if __name__ == "__main__":
