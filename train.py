@@ -571,7 +571,8 @@ if do_train:
     if base_model_dir is None:
         image_size = image_sizes[0]
         learn.freeze()
-        learn.fit(3, lr=lr)
+        learn.fit(1, lr=lr)
+        exit(0)
 
     learn.unfreeze()
     for c in range(num_cycles):
