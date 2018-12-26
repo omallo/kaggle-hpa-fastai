@@ -470,14 +470,8 @@ def shuffle_tfm(image, **kwargs):
 
 def split_train_set():
     num_train_samples = 31072
-    num_extended_train_samples = 105678
-
-    split = [False] * (num_extended_train_samples if use_extended_train_set else num_train_samples)
     _, valid_indexes = train_test_split(list(range(num_train_samples)), test_size=0.2, random_state=42)
-
-    for i in valid_indexes:
-        split[i] = True
-    return split
+    return valid_indexes
 
 
 protein_stats = ([0.08069, 0.05258, 0.05487, 0.08282], [0.13704, 0.10145, 0.15313, 0.13814])
@@ -499,7 +493,7 @@ data = (
     HpaImageItemList
         .from_csv(input_dir, train_csv, folder='train', create_func=create_image)
         # .use_partial_data(sample_pct=0.005, seed=42)
-        .split_by_valid_func(split_train_set)
+        .split_by_idx(split_train_set())
         .label_from_df(sep=' ', classes=[str(i) for i in range(28)])
         .transform(tfms)
         .add_test(test_images)
