@@ -514,7 +514,7 @@ mixup = MixUpCallback(learn, alpha=0.4, stack_x=False, stack_y=False)  # stack_y
 learn.callbacks = [
     early_stopper,
     best_f1_model_saver,
-    mixup
+    # mixup
 ]
 
 # print(learn.summary)
