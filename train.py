@@ -1,6 +1,6 @@
+import cv2
 import scipy
 import torchvision
-from PIL import Image as PILImage
 from fastai import *
 from fastai.callbacks import *
 from fastai.vision import *
@@ -74,26 +74,25 @@ def load_image(file_path_base, image_size):
 
 
 def load_image_channel(file_path, image_size, channel_name):
-    channel = PILImage.open(file_path)
+    channel = cv2.imread(file_path)
     if channel is None:
         error_message = 'could not load image: "{}"'.format(file_path)
         print(error_message, flush=True)
         raise Exception(error_message)
-    if channel.size[0] != image_size:
-        channel = channel.resize((image_size, image_size), resample=PILImage.ANTIALIAS)
+    if channel.shape[0] != image_size:
+        channel = cv2.resize(channel, (image_size, image_size), interpolation=cv2.INTER_AREA)
 
-    channel_np = np.array(channel)
-    if len(channel_np.shape) == 3:
+    if len(channel.shape) == 3:
         if channel_name == 'red':
-            channel_np = channel_np[:, :, 0]
+            channel = channel[:, :, 2]
         elif channel_name == 'green':
-            channel_np = channel_np[:, :, 1]
+            channel = channel[:, :, 1]
         elif channel_name == 'blue':
-            channel_np = channel_np[:, :, 2]
+            channel = channel[:, :, 0]
         else:
-            channel_np = (0.5 * channel_np[:, :, 0] + 0.5 * channel_np[:, :, 1]).astype(np.uint8)
+            channel = (0.5 * channel[:, :, 2] + 0.5 * channel[:, :, 1]).astype(np.uint8)
 
-    return channel_np
+    return channel
 
 
 def f1_score(prediction_logits, targets, threshold=0.5):
