@@ -65,22 +65,34 @@ def load_image(file_path_base, image_size):
     if not os.path.isfile('{}_red.png'.format(file_path_base)):
         file_path_base = '{}/images/{}'.format(input_dir_external, os.path.basename(file_path_base))
         extension = 'jpg'
-    r = load_image_channel('{}_red.{}'.format(file_path_base, extension), image_size)
-    g = load_image_channel('{}_green.{}'.format(file_path_base, extension), image_size)
-    b = load_image_channel('{}_blue.{}'.format(file_path_base, extension), image_size)
-    y = load_image_channel('{}_yellow.{}'.format(file_path_base, extension), image_size)
+    r = load_image_channel('{}_red.{}'.format(file_path_base, extension), image_size, 'red')
+    g = load_image_channel('{}_green.{}'.format(file_path_base, extension), image_size, 'green')
+    b = load_image_channel('{}_blue.{}'.format(file_path_base, extension), image_size, 'blue')
+    y = load_image_channel('{}_yellow.{}'.format(file_path_base, extension), image_size, 'yellow')
     return np.stack([r, g, b, y], axis=2)
 
 
-def load_image_channel(file_path, image_size):
-    channel = PILImage.open(file_path).convert('L')
+def load_image_channel(file_path, image_size, channel_name):
+    channel = PILImage.open(file_path)
     if channel is None:
         error_message = 'could not load image: "{}"'.format(file_path)
         print(error_message, flush=True)
         raise Exception(error_message)
     if channel.size[0] != image_size:
-        channel = channel.resize((image_size, image_size), resample=PILImage.LANCZOS)
-    return np.array(channel)
+        channel = channel.resize((image_size, image_size), resample=PILImage.ANTIALIAS)
+
+    channel_np = np.array(channel)
+    if len(channel_np.shape) == 3:
+        if channel_name == 'red':
+            channel_np = channel_np[:, :, 0]
+        elif channel_name == 'green':
+            channel_np = channel_np[:, :, 1]
+        elif channel_name == 'blue':
+            channel_np = channel_np[:, :, 2]
+        else:
+            channel_np = (0.5 * channel_np[:, :, 0] + 0.5 * channel_np[:, :, 1]).astype(np.uint8)
+
+    return channel_np
 
 
 def f1_score(prediction_logits, targets, threshold=0.5):
