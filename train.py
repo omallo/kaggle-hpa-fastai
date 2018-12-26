@@ -16,6 +16,7 @@ output_dir = '/artifacts'
 base_model_dir = None  # '/storage/models/hpa/resnet34'
 image_size = 256
 batch_size = 32
+num_workers = 32
 lr = 0.003
 num_cycles = 3
 cycle_len = 10
@@ -517,8 +518,7 @@ data = (
         .label_from_df(sep=' ', classes=[str(i) for i in range(28)])
         .transform(tfms)
         .add_test(test_images)
-        # .databunch(bs=64, num_workers=8)
-        .databunch(bs=batch_size)
+        .databunch(bs=batch_size, num_workers=num_workers)
         .normalize(protein_stats)
 )
 
