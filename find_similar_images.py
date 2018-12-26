@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 from __future__ import (absolute_import, division, print_function)
+from PIL import Image
+import six
 
 import imagehash
-from PIL import Image
 
 """
 Demo of hashing
@@ -13,9 +14,8 @@ def find_similar_images(userpaths, hashfunc=imagehash.average_hash):
     import os
     def is_image(filename):
         f = filename.lower()
-        return 'green' in f and (
-            f.endswith(".png") or f.endswith(".jpg") or f.endswith(".jpeg") or f.endswith(".bmp") or f.endswith(
-                ".gif") or '.jpg' in f)
+        return f.endswith(".png") or f.endswith(".jpg") or \
+               f.endswith(".jpeg") or f.endswith(".bmp") or f.endswith(".gif") or '.jpg' in f
 
     image_filenames = []
     for userpath in userpaths:
