@@ -80,7 +80,7 @@ def load_image_channel(file_path, image_size):
         raise Exception(error_message)
     if channel.size[0] != image_size:
         channel = channel.resize((image_size, image_size), resample=PILImage.LANCZOS)
-    return channel
+    return np.array(channel)
 
 
 def f1_score(prediction_logits, targets, threshold=0.5):
