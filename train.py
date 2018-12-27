@@ -99,7 +99,6 @@ class F1Score(Callback):
         self.targets.extend(last_target.cpu().data.numpy())
 
     def on_epoch_end(self, **kwargs):
-        print('evaluating f1 score on {} samples'.format(len(self.prediction_logits)), flush=True)
         self.metric = f1_score(torch.tensor(self.prediction_logits), torch.tensor(self.targets))
 
 
