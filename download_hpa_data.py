@@ -71,7 +71,6 @@ def download_image(image_id):
             img_url = v18_url + img_path
             r = requests.get(img_url, allow_redirects=True)
             open(dst_file_path, 'wb').write(r.content)
-            convert_to_png(dst_file_path)
 
 
 def convert_to_png(src_file):
@@ -179,6 +178,10 @@ if __name__ == "__main__":
     print('downloading images...', flush=True)
     with Pool(64) as pool:
         pool.map(download_image, sample_ids)
+
+    print('converting images to pngs...', flush=True)
+    with Pool(64) as pool:
+        pool.map(convert_to_png, glob.glob('{}/images/*.jpg'.format(BASE_HPA_EXT_DIR)))
 
     analyze()
 
