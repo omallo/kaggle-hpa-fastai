@@ -2,7 +2,9 @@ import glob
 import os
 from multiprocessing.pool import Pool
 
+import cv2
 import imagehash
+import numpy as np
 import pandas as pd
 import requests
 from PIL import Image
@@ -104,7 +106,46 @@ def do_find_similar_images():
     print('\n'.join(test_duplicates), flush=True)
 
 
+def convert_to_png(src_file):
+    basename = os.path.basename(src_file)
+    dst_file = '/storage/kaggle/hpa_external/pngs/{}.png'.format(basename[:-4])
+    if not os.path.isfile(dst_file):
+        channel_name = src_file.split('_')[-1][:-4]
+        image = load_image_channel(src_file, 512, channel_name)
+        cv2.imwrite(dst_file, image)
+
+
+def do_convert_to_png():
+    src_files = glob.glob('/storage/kaggle/hpa_external/images/*.jpg')
+    with Pool(64) as pool:
+        pool.map(convert_to_png, src_files)
+
+
+def load_image_channel(file_path, image_size, channel_name):
+    channel = cv2.imread(file_path)
+    if channel is None:
+        error_message = 'could not load image: "{}"'.format(file_path)
+        print(error_message, flush=True)
+        raise Exception(error_message)
+    if channel.shape[0] != image_size:
+        channel = cv2.resize(channel, (image_size, image_size), interpolation=cv2.INTER_AREA)
+
+    if channel_name == 'red':
+        channel = channel[:, :, 2]
+    elif channel_name == 'green':
+        channel = channel[:, :, 1]
+    elif channel_name == 'blue':
+        channel = channel[:, :, 0]
+    elif channel_name == 'yellow':
+        channel = (0.5 * channel[:, :, 2] + 0.5 * channel[:, :, 1]).astype(np.uint8)
+    else:
+        raise Exception('unexpected channel name "{}"'.format(channel_name))
+
+    return channel
+
+
 if __name__ == "__main__":
-    do_download()
-    do_analyze()
+    # do_download()
+    # do_analyze()
     # do_find_similar_images()
+    do_convert_to_png()
