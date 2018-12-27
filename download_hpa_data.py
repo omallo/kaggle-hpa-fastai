@@ -137,7 +137,7 @@ def parse_xml(gene_id):
 def analyze():
     colors = ['red', 'green', 'blue', 'yellow']
     id_colors = {}
-    for f in glob.glob('{}/hpa_external/pngs/*.png'.format(BASE_HPA_EXT_DIR)):
+    for f in glob.glob('{}/pngs/*.png'.format(BASE_HPA_EXT_DIR)):
         b = os.path.basename(f)
         for c in colors:
             s = '_{}.png'.format(c)
