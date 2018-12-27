@@ -128,10 +128,6 @@ def parse_xml(gene_id):
                         if not image_url.startswith(IMAGE_URL_PREFIX) or not image_url.endswith(IMAGE_URL_SUFFIX):
                             raise Exception('unexpected image URL "{}"'.format(image_url))
                         image_id = image_url[len(IMAGE_URL_PREFIX):-len(IMAGE_URL_SUFFIX)].replace('/', '_')
-                        if not os.path.isfile('{}/images/{}_green.jpg'.format(BASE_HPA_EXT_DIR, image_id)):
-                            # raise Exception('unexpected image ID "{}" from URL "{}"'.format(image_id, image_url))
-                            #  print('images for ID "{}" were not downloaded'.format(image_id), flush=True)
-                            continue
                         result.append((image_id, locations))
 
     return result
@@ -144,9 +140,11 @@ if __name__ == "__main__":
 
     df = pd.read_csv('./analysis/subcellular_location.tsv', sep='\t', index_col='Gene')
 
+    print('downloading xmls...', flush=True)
     with Pool(64) as pool:
         pool.map(download_xml, df.index.tolist())
 
+    print('parsing xmls...', flush=True)
     sample_ids = []
     sample_targets = []
     with Pool(64) as pool:
@@ -156,9 +154,11 @@ if __name__ == "__main__":
                 sample_targets.append(sample[1])
     print(len(sample_ids))
 
+    print('downloading images...', flush=True)
     with Pool(64) as pool:
         pool.map(download_image, sample_ids)
 
+    print('exporting results...', flush=True)
     train_df = pd.read_csv('{}/train.csv'.format(BASE_HPA_DIR), index_col='Id')
     external_df = pd.DataFrame(index=sample_ids, data={'Target': [' '.join(list(map(str, t))) for t in sample_targets]})
     combined_df = pd.concat([train_df, external_df])
