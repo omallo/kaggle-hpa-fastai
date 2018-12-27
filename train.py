@@ -21,7 +21,7 @@ num_workers = 32
 lr = 0.003
 num_cycles = 2
 cycle_len = 10
-use_sampling = False
+use_sampling = True
 use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
@@ -536,13 +536,13 @@ if base_model_dir is not None:
 
 learn = create_cnn(
     data,
-    inception,
+    resnet34,
     pretrained=True,
     cut=-2,
     ps=0.5,
-    # split_on=resnet_split,
+    split_on=resnet_split,
     path=Path(output_dir),
-    loss_func=focal_loss,
+    loss_func=F.binary_cross_entropy_with_logits,
     metrics=[F1Score()])
 
 early_stopper = \
