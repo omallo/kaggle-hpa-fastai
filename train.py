@@ -6,6 +6,7 @@ from fastai.callbacks import *
 from fastai.vision import *
 from pretrainedmodels.models.nasnet import nasnetalarge
 from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
+from pretrainedmodels.models.bninception import bninception
 from sklearn.metrics import f1_score as skl_f1_score
 from sklearn.model_selection import StratifiedShuffleSplit, train_test_split
 from torch.utils.data.sampler import WeightedRandomSampler
@@ -14,18 +15,18 @@ input_dir = '/storage/kaggle/hpa'
 input_dir_external = '/storage/kaggle/hpa_external'
 output_dir = '/artifacts'
 base_model_dir = None  # '/storage/models/hpa/resnet34'
-image_size = 512
+image_size = 256
 batch_size = 32
 num_workers = 32
 lr = 0.003
-num_cycles = 3
+num_cycles = 2
 cycle_len = 10
 use_sampling = False
 use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
 do_train = True
-use_extended_train_set = True
+use_extended_train_set = False
 
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
@@ -328,6 +329,21 @@ def nasnet(pretrained):
     return create_nasnet(pretrained)
 
 
+def create_inception(pretrained):
+    model = bninception(pretrained='imagenet' if pretrained else None)
+
+    conv1 = nn.Conv2d(4, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3))
+    conv1.weight.data[:, 0:3, :, :] = model.conv1_7x7_s2.weight.data
+    conv1.weight.data[:, 3, :, :] = model.conv1_7x7_s2.weight.data[:, 0, :, :].clone()
+    model.conv1_7x7_s2 = conv1
+
+    return model
+
+
+def inception(pretrained):
+    return create_inception(pretrained)
+
+
 def create_image(fn):
     return Image(pil2tensor(PIL.Image.fromarray(load_image(fn, image_size)), np.float32) / 255.)
 
@@ -520,9 +536,9 @@ if base_model_dir is not None:
 
 learn = create_cnn(
     data,
-    seresnext50,
+    inception,
     pretrained=True,
-    cut=-3,
+    cut=-2,
     ps=0.5,
     # split_on=resnet_split,
     path=Path(output_dir),
