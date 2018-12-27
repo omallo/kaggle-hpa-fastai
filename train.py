@@ -582,8 +582,8 @@ if do_train:
         learn.fit_one_cycle(cycle_len, max_lr=lr)
         if early_stopper.early_stopped:
             break
-    if not early_stopper.early_stopped:
-        learn.fit_one_cycle(cycle_len, max_lr=slice(lr / 10, lr))
+    # if not early_stopper.early_stopped:
+    #     learn.fit_one_cycle(cycle_len, max_lr=slice(lr / 10, lr))
 
     print('best f1 score: {:.6f}'.format(best_f1_model_saver.best_global))
 
