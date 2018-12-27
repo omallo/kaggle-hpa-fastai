@@ -14,11 +14,11 @@ input_dir = '/storage/kaggle/hpa'
 input_dir_external = '/storage/kaggle/hpa_external'
 output_dir = '/artifacts'
 base_model_dir = None  # '/storage/models/hpa/resnet34'
-image_size = 256
+image_size = 512
 batch_size = 32
 num_workers = 32
 lr = 0.003
-num_cycles = 7
+num_cycles = 3
 cycle_len = 10
 use_sampling = False
 use_progressive_image_resizing = False
@@ -519,11 +519,11 @@ if base_model_dir is not None:
 
 learn = create_cnn(
     data,
-    resnet34,
+    seresnext50,
     pretrained=True,
-    cut=-2,
+    cut=-3,
     ps=0.5,
-    split_on=resnet_split,
+    # split_on=resnet_split,
     path=Path(output_dir),
     loss_func=focal_loss,
     metrics=[F1Score()])
