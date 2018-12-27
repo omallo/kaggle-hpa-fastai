@@ -62,35 +62,23 @@ n_labels = 50782
 
 
 def load_image(file_path_base, image_size):
-    extension = 'png'
     if not os.path.isfile('{}_red.png'.format(file_path_base)):
-        file_path_base = '{}/images/{}'.format(input_dir_external, os.path.basename(file_path_base))
-        extension = 'jpg'
-    r = load_image_channel('{}_red.{}'.format(file_path_base, extension), image_size, 'red')
-    g = load_image_channel('{}_green.{}'.format(file_path_base, extension), image_size, 'green')
-    b = load_image_channel('{}_blue.{}'.format(file_path_base, extension), image_size, 'blue')
-    y = load_image_channel('{}_yellow.{}'.format(file_path_base, extension), image_size, 'yellow')
+        file_path_base = '{}/pngs/{}'.format(input_dir_external, os.path.basename(file_path_base))
+    r = load_image_channel('{}_red.png'.format(file_path_base), image_size)
+    g = load_image_channel('{}_green.png'.format(file_path_base), image_size)
+    b = load_image_channel('{}_blue.png'.format(file_path_base), image_size)
+    y = load_image_channel('{}_yellow.png'.format(file_path_base), image_size)
     return np.stack([r, g, b, y], axis=2)
 
 
-def load_image_channel(file_path, image_size, channel_name):
-    channel = cv2.imread(file_path)
+def load_image_channel(file_path, image_size):
+    channel = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
     if channel is None:
         error_message = 'could not load image: "{}"'.format(file_path)
         print(error_message, flush=True)
         raise Exception(error_message)
     if channel.shape[0] != image_size:
         channel = cv2.resize(channel, (image_size, image_size), interpolation=cv2.INTER_AREA)
-
-    if len(channel.shape) == 3:
-        if channel_name == 'red':
-            channel = channel[:, :, 2]
-        elif channel_name == 'green':
-            channel = channel[:, :, 1]
-        elif channel_name == 'blue':
-            channel = channel[:, :, 0]
-        else:
-            channel = (0.5 * channel[:, :, 2] + 0.5 * channel[:, :, 1]).astype(np.uint8)
 
     return channel
 
