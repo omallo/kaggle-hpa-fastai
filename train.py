@@ -26,7 +26,7 @@ use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
 do_train = True
-use_extended_train_set = False
+use_extended_train_set = True
 
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
@@ -511,7 +511,7 @@ test_images = (
         .from_csv(input_dir, 'sample_submission.csv', folder='test', create_func=create_image)
 )
 
-train_csv = 'train_extended.csv' if use_extended_train_set else 'train.csv'
+train_csv = 'train_extended_1.csv' if use_extended_train_set else 'train.csv'
 
 data = (
     HpaImageItemList
