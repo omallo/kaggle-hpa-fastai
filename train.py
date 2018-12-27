@@ -85,7 +85,8 @@ def load_image_channel(file_path, image_size):
 
 def f1_score(prediction_logits, targets, threshold=0.5):
     predictions = torch.sigmoid(prediction_logits)
-    binary_predictions = (predictions > threshold).float()
+    threshold_t = torch.tensor(threshold).float().to(targets.device)
+    binary_predictions = (predictions > threshold_t).float()
     return skl_f1_score(targets, binary_predictions, average='macro')
 
 
