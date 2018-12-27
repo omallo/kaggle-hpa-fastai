@@ -1,3 +1,4 @@
+import glob
 import os
 import xml.etree.ElementTree as ET
 from multiprocessing.pool import Pool
@@ -134,6 +135,26 @@ def parse_xml(gene_id):
     return result
 
 
+def analyze():
+    colors = ['red', 'green', 'blue', 'yellow']
+    id_colors = {}
+    for f in glob.glob('{}/hpa_external/pngs/*.png'.format(BASE_HPA_EXT_DIR)):
+        b = os.path.basename(f)
+        for c in colors:
+            s = '_{}.png'.format(c)
+            if b.endswith(s):
+                id = b[:-len(s)]
+                ic = id_colors.setdefault(id, [])
+                ic.append(c)
+                id_colors[id] = ic
+
+    print('found {} samples'.format(len(id_colors)), flush=True)
+
+    for k, v in id_colors.items():
+        if len(v) != len(colors):
+            print('sample "{}" only has colors {}'.format(k, v), flush=True)
+
+
 if __name__ == "__main__":
     os.makedirs('{}/images'.format(BASE_HPA_EXT_DIR), exist_ok=True)
     os.makedirs('{}/pngs'.format(BASE_HPA_EXT_DIR), exist_ok=True)
@@ -158,6 +179,8 @@ if __name__ == "__main__":
     print('downloading images...', flush=True)
     with Pool(64) as pool:
         pool.map(download_image, sample_ids)
+
+    analyze()
 
     print('exporting results...', flush=True)
     train_df = pd.read_csv('{}/train.csv'.format(BASE_HPA_DIR), index_col='Id')
