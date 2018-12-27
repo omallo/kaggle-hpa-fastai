@@ -18,7 +18,7 @@ image_size = 256
 batch_size = 32
 num_workers = 32
 lr = 0.003
-num_cycles = 3
+num_cycles = 7
 cycle_len = 10
 use_sampling = False
 use_progressive_image_resizing = False
@@ -558,8 +558,7 @@ if do_train:
     if base_model_dir is None:
         image_size = image_sizes[0]
         learn.freeze()
-        learn.fit(1, lr=lr)
-        exit(0)
+        learn.fit(3, lr=lr)
 
     learn.unfreeze()
     for c in range(num_cycles):
