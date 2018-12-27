@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 from multiprocessing.pool import Pool
 
 import cv2
+import numpy as np
 import pandas as pd
 import requests
 
