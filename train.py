@@ -26,7 +26,7 @@ use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
 do_train = True
-use_extended_train_set = False
+use_extended_train_set = True
 
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
