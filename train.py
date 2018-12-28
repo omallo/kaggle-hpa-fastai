@@ -232,7 +232,7 @@ def calculate_best_threshold(prediction_logits, targets, per_class):
         wd = 1e-5
         error = lambda p: np.concatenate((f1_soft(prediction_logits, targets, p) - 1.0, wd * p), axis=None)
         p, success = scipy.optimize.leastsq(error, params)
-        return p
+        return sigmoid_np(p)
     else:
         thresholds = np.linspace(0, 1, 51)
         scores = [f1_score(prediction_logits, targets, threshold=t) for t in thresholds]
