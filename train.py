@@ -7,7 +7,7 @@ from fastai.vision import *
 from pretrainedmodels.models.nasnet import nasnetalarge
 from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
 from pretrainedmodels.models.bninception import bninception
-from sklearn.metrics import f1_score as skl_f1_score
+from sklearn.metrics import f1_score as skl_f1_score, precision_recall_fscore_support
 from sklearn.model_selection import StratifiedShuffleSplit, train_test_split
 from torch.utils.data.sampler import WeightedRandomSampler
 
@@ -89,6 +89,13 @@ def f1_score(prediction_logits, targets, threshold=0.5):
     threshold_t = torch.tensor(threshold).float().to(targets.device)
     binary_predictions = (predictions > threshold_t).float()
     return skl_f1_score(targets, binary_predictions, average='macro')
+
+
+def score_metrics(prediction_logits, targets, threshold=0.5):
+    predictions = torch.sigmoid(prediction_logits)
+    threshold_t = torch.tensor(threshold).float().to(targets.device)
+    binary_predictions = (predictions > threshold_t).float()
+    return precision_recall_fscore_support(targets, binary_predictions, beta=1.0)
 
 
 class F1Score(Callback):
@@ -597,14 +604,22 @@ np.save('{}/valid_prediction_categories.npy'.format(output_dir), valid_predictio
 test_prediction_logits, _ = learn.TTA(ds_type=DatasetType.Test)
 np.save('{}/test_prediction_logits.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
 
+print()
 best_threshold = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot, per_class=False)
 best_score = f1_score(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
 print('best threshold / score: {} / {:.6f}'.format(best_threshold, best_score))
+precision, recall, f1, occurrences = score_metrics(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
+for i, (p, r, f, o) in enumerate(zip(precision, recall, f1, occurrences)):
+    print(f'{i:02d}: p={p:.3f} / r={r:.3f} / f1={f:.3f} / #={o}', flush=True)
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
 write_submission(test_prediction_categories, '{}/submission_single_threshold.csv'.format(output_dir))
 
+print()
 best_threshold = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot, per_class=True)
 best_score = f1_score(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
 print('best threshold / score: {} / {:.6f}'.format(best_threshold, best_score))
+precision, recall, f1, occurrences = score_metrics(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
+for i, (p, r, f, o) in enumerate(zip(precision, recall, f1, occurrences)):
+    print(f'{i:02d}: p={p:.3f} / r={r:.3f} / f1={f:.3f} / #={o}', flush=True)
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
 write_submission(test_prediction_categories, '{}/submission_class_threshold.csv'.format(output_dir))
