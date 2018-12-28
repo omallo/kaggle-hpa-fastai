@@ -1,4 +1,4 @@
-fastai==1.0.37
+fastai==1.0.38
 imagehash==4.0
 opencv-python==3.4.3.18
 pretrainedmodels==0.7.4
