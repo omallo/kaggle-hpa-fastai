@@ -28,6 +28,9 @@ progressive_image_size_end = 512
 do_train = True
 use_extended_train_set = False
 
+CATEGORIES = list(map(str, range(28)))
+# CATEGORIES = list(map(str, [15, 16, 17, 18, 19, 20, 22, 24, 26, 27]))
+
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
     1: ('Nuclear membrane', 1254),
@@ -356,8 +359,9 @@ def create_image(fn):
 
 
 def write_submission(prediction_categories, filename):
+    category_names = np.array(CATEGORIES)
     submission_df = pd.read_csv('{}/sample_submission.csv'.format(input_dir), index_col='Id', usecols=['Id'])
-    submission_df['Predicted'] = [' '.join(map(str, c)) for c in prediction_categories]
+    submission_df['Predicted'] = [' '.join(c[category_names]) for c in prediction_categories]
     submission_df.to_csv(filename)
 
 
@@ -498,9 +502,8 @@ def shuffle_tfm(image, **kwargs):
     return dst_image
 
 
-def split_train_set():
-    num_train_samples = 31072
-    _, valid_indexes = train_test_split(list(range(num_train_samples)), test_size=0.2, random_state=42)
+def split_train_set(train_df):
+    _, valid_indexes = train_test_split(list(range(len(train_df))), test_size=0.2, random_state=42)
     return valid_indexes
 
 
@@ -520,27 +523,28 @@ test_images = (
 )
 
 train_csv = 'train_extended_1.csv' if use_extended_train_set else 'train.csv'
+train_df = pd.read_csv(f'{input_dir}/{train_csv}')
 
 data = (
     HpaImageItemList
-        .from_csv(input_dir, train_csv, folder='train', create_func=create_image)
+        .from_df(train_df, path=Path(input_dir), folder='train', create_func=create_image)
         # .use_partial_data(sample_pct=0.005, seed=42)
-        .split_by_idx(split_train_set())
-        .label_from_df(sep=' ', classes=[str(i) for i in range(28)])
+        .split_by_idx(split_train_set(train_df))
+        .label_from_df(sep=' ', classes=CATEGORIES)
         .transform(tfms)
         .add_test(test_images)
         .databunch(bs=batch_size, num_workers=num_workers)
         .normalize(protein_stats)
 )
 
-print('train dataset size: {}'.format(len(data.train_ds)), flush=True)
-print('valid dataset size: {}'.format(len(data.valid_ds)), flush=True)
-print('test dataset size: {}'.format(len(data.test_ds)), flush=True)
+print(f'train dataset size: {len(data.train_ds)}', flush=True)
+print(f'valid dataset size: {len(data.valid_ds)}', flush=True)
+print(f'test dataset size: {len(data.test_ds)}', flush=True)
 
 # data.show_batch(rows=3)
 
 if base_model_dir is not None:
-    shutil.copytree('{}/models'.format(base_model_dir), '{}/models'.format(output_dir))
+    shutil.copytree(f'{base_model_dir}/models', f'{output_dir}/models')
 
 learn = create_cnn(
     data,
@@ -593,33 +597,35 @@ if do_train:
     # if not early_stopper.early_stopped:
     #     learn.fit_one_cycle(cycle_len, max_lr=slice(lr / 10, lr))
 
-    print('best f1 score: {:.6f}'.format(best_f1_model_saver.best_global))
+    print(f'best f1 score: {best_f1_model_saver.best_global:.6f}')
 
 learn.load('model')
 
 valid_prediction_logits, valid_prediction_categories_one_hot = learn.TTA(ds_type=DatasetType.Valid)
-np.save('{}/valid_prediction_logits.npy'.format(output_dir), valid_prediction_logits.cpu().data.numpy())
-np.save('{}/valid_prediction_categories.npy'.format(output_dir), valid_prediction_categories_one_hot.cpu().data.numpy())
+np.save(f'{output_dir}/valid_prediction_logits.npy', valid_prediction_logits.cpu().data.numpy())
+np.save(f'{output_dir}/valid_prediction_categories.npy', valid_prediction_categories_one_hot.cpu().data.numpy())
 
 test_prediction_logits, _ = learn.TTA(ds_type=DatasetType.Test)
-np.save('{}/test_prediction_logits.npy'.format(output_dir), test_prediction_logits.cpu().data.numpy())
+np.save(f'{output_dir}/test_prediction_logits.npy', test_prediction_logits.cpu().data.numpy())
 
 print()
 best_threshold = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot, per_class=False)
 best_score = f1_score(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
-print('best threshold / score: {} / {:.6f}'.format(best_threshold, best_score))
-precision, recall, f1, occurrences = score_metrics(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
+print(f'best threshold / score: {best_threshold} / {best_score:.6f}')
+precision, recall, f1, occurrences = \
+    score_metrics(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
 for i, (p, r, f, o) in enumerate(zip(precision, recall, f1, occurrences)):
     print(f'{i:02d}: p={p:.3f} / r={r:.3f} / f1={f:.3f} / #={o}', flush=True)
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
-write_submission(test_prediction_categories, '{}/submission_single_threshold.csv'.format(output_dir))
+write_submission(test_prediction_categories, f'{output_dir}/submission_single_threshold.csv')
 
 print()
 best_threshold = calculate_best_threshold(valid_prediction_logits, valid_prediction_categories_one_hot, per_class=True)
 best_score = f1_score(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
-print('best threshold / score: {} / {:.6f}'.format(best_threshold, best_score))
-precision, recall, f1, occurrences = score_metrics(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
+print(f'best threshold / score: {best_threshold} / {best_score:.6f}')
+precision, recall, f1, occurrences = \
+    score_metrics(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
 for i, (p, r, f, o) in enumerate(zip(precision, recall, f1, occurrences)):
     print(f'{i:02d}: p={p:.3f} / r={r:.3f} / f1={f:.3f} / #={o}', flush=True)
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
-write_submission(test_prediction_categories, '{}/submission_class_threshold.csv'.format(output_dir))
+write_submission(test_prediction_categories, f'{output_dir}/submission_class_threshold.csv')
