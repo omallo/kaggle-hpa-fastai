@@ -25,7 +25,7 @@ use_sampling = False
 use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
-do_train = True
+do_train = False
 use_extended_train_set = False
 
 name_label_dict = {
@@ -544,11 +544,11 @@ if base_model_dir is not None:
 
 learn = create_cnn(
     data,
-    resnet34,
+    seresnext50,
     pretrained=True,
-    cut=-2,
+    cut=-3,
     ps=0.5,
-    split_on=resnet_split,
+    # split_on=resnet_split,
     path=Path(output_dir),
     loss_func=focal_loss,
     metrics=[F1Score()])
