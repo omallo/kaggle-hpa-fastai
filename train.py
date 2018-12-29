@@ -19,7 +19,7 @@ image_size = 512
 batch_size = 32
 num_workers = 32
 lr = 0.003
-num_cycles = 20
+num_cycles = 10
 cycle_len = 10
 use_sampling = False
 use_progressive_image_resizing = False
@@ -28,8 +28,8 @@ progressive_image_size_end = 512
 do_train = True
 use_extended_train_set = False
 
-# CATEGORY_NAMES = list(map(str, range(28)))
-CATEGORY_NAMES = list(map(str, [15, 16, 17, 18, 19, 20, 22, 24, 26, 27]))
+CATEGORY_NAMES = list(map(str, range(28)))
+# CATEGORY_NAMES = list(map(str, [15, 16, 17, 18, 19, 20, 22, 24, 26, 27]))
 
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
