@@ -28,8 +28,8 @@ progressive_image_size_end = 512
 do_train = True
 use_extended_train_set = False
 
-# CATEGORIES = list(map(str, range(28)))
-CATEGORIES = list(map(str, [15, 16, 17, 18, 19, 20, 22, 24, 26, 27]))
+# CATEGORY_NAMES = list(map(str, range(28)))
+CATEGORY_NAMES = list(map(str, [15, 16, 17, 18, 19, 20, 22, 24, 26, 27]))
 
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
@@ -65,6 +65,10 @@ name_label_dict = {
 n_labels = 50782
 
 
+def log(*args):
+    print(*args, flush=True)
+
+
 def load_image(file_path_base, image_size):
     if not os.path.isfile('{}_red.png'.format(file_path_base)):
         file_path_base = '{}/pngs/{}'.format(input_dir_external, os.path.basename(file_path_base))
@@ -79,7 +83,7 @@ def load_image_channel(file_path, image_size):
     channel = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
     if channel is None:
         error_message = 'could not load image: "{}"'.format(file_path)
-        print(error_message, flush=True)
+        log(error_message)
         raise Exception(error_message)
     if channel.shape[0] != image_size:
         channel = cv2.resize(channel, (image_size, image_size), interpolation=cv2.INTER_AREA)
@@ -359,7 +363,7 @@ def create_image(fn):
 
 
 def write_submission(prediction_categories, filename):
-    category_names = np.array(CATEGORIES)
+    category_names = np.array(CATEGORY_NAMES)
     submission_df = pd.read_csv('{}/sample_submission.csv'.format(input_dir), index_col='Id', usecols=['Id'])
     submission_df['Predicted'] = [' '.join(c[category_names]) for c in prediction_categories]
     submission_df.to_csv(filename)
@@ -525,7 +529,7 @@ test_images = (
 train_csv = 'train_extended_1.csv' if use_extended_train_set else 'train.csv'
 train_df = pd.read_csv(f'{input_dir}/{train_csv}')
 
-train_df['Target'] = train_df.Target.map(lambda t: ' '.join(set(t.split(' ')).intersection(set(CATEGORIES))))
+train_df['Target'] = train_df.Target.map(lambda t: ' '.join(set(t.split(' ')).intersection(set(CATEGORY_NAMES))))
 train_df = train_df[train_df.Target.map(lambda t: len(t) > 0)].copy()
 
 data = (
@@ -533,16 +537,16 @@ data = (
         .from_df(train_df, path=Path(input_dir), folder='train', create_func=create_image)
         # .use_partial_data(sample_pct=0.005, seed=42)
         .split_by_idx(split_train_set(train_df))
-        .label_from_df(sep=' ', classes=CATEGORIES)
+        .label_from_df(sep=' ', classes=CATEGORY_NAMES)
         .transform(tfms)
         .add_test(test_images)
         .databunch(bs=batch_size, num_workers=num_workers)
         .normalize(protein_stats)
 )
 
-print(f'train dataset size: {len(data.train_ds)}', flush=True)
-print(f'valid dataset size: {len(data.valid_ds)}', flush=True)
-print(f'test dataset size: {len(data.test_ds)}', flush=True)
+log(f'train dataset size: {len(data.train_ds)}')
+log(f'valid dataset size: {len(data.valid_ds)}')
+log(f'test dataset size: {len(data.test_ds)}')
 
 # data.show_batch(rows=3)
 
@@ -618,7 +622,7 @@ print(f'best threshold / score: {best_threshold} / {best_score:.6f}')
 precision, recall, f1, occurrences = \
     score_metrics(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
 for i, (p, r, f, o) in enumerate(zip(precision, recall, f1, occurrences)):
-    print(f'{i:02d}: p={p:.3f} / r={r:.3f} / f1={f:.3f} / #={o}', flush=True)
+    log(f'{i:02d}: p={p:.3f} / r={r:.3f} / f1={f:.3f} / #={o}')
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
 write_submission(test_prediction_categories, f'{output_dir}/submission_single_threshold.csv')
 
@@ -629,6 +633,6 @@ print(f'best threshold / score: {best_threshold} / {best_score:.6f}')
 precision, recall, f1, occurrences = \
     score_metrics(valid_prediction_logits, valid_prediction_categories_one_hot, threshold=best_threshold)
 for i, (p, r, f, o) in enumerate(zip(precision, recall, f1, occurrences)):
-    print(f'{i:02d}: p={p:.3f} / r={r:.3f} / f1={f:.3f} / #={o}', flush=True)
+    log(f'{i:02d}: p={p:.3f} / r={r:.3f} / f1={f:.3f} / #={o}')
 test_prediction_categories = calculate_categories(test_prediction_logits, best_threshold)
 write_submission(test_prediction_categories, f'{output_dir}/submission_class_threshold.csv')
