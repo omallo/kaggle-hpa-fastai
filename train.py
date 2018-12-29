@@ -4,9 +4,9 @@ import torchvision
 from fastai import *
 from fastai.callbacks import *
 from fastai.vision import *
+from pretrainedmodels.models.bninception import bninception
 from pretrainedmodels.models.nasnet import nasnetalarge
 from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
-from pretrainedmodels.models.bninception import bninception
 from sklearn.metrics import f1_score as skl_f1_score, precision_recall_fscore_support
 from sklearn.model_selection import StratifiedShuffleSplit, train_test_split
 from torch.utils.data.sampler import WeightedRandomSampler
@@ -14,7 +14,7 @@ from torch.utils.data.sampler import WeightedRandomSampler
 input_dir = '/storage/kaggle/hpa'
 input_dir_external = '/storage/kaggle/hpa_external'
 output_dir = '/artifacts'
-base_model_dir = '/storage/models/hpa/fastai-seresnext50-512'
+base_model_dir = '/storage/models/hpa/resnet34'
 image_size = 512
 batch_size = 32
 num_workers = 32
@@ -25,7 +25,7 @@ use_sampling = False
 use_progressive_image_resizing = False
 progressive_image_size_start = 128
 progressive_image_size_end = 512
-do_train = False
+do_train = True
 use_extended_train_set = False
 
 name_label_dict = {
@@ -544,11 +544,11 @@ if base_model_dir is not None:
 
 learn = create_cnn(
     data,
-    seresnext50,
+    resnet34,
     pretrained=True,
-    cut=-3,
+    cut=-2,
     ps=0.5,
-    # split_on=resnet_split,
+    split_on=resnet_split,
     path=Path(output_dir),
     loss_func=focal_loss,
     metrics=[F1Score()])
