@@ -365,7 +365,7 @@ def create_image(fn):
 def write_submission(prediction_categories, filename):
     category_names = np.array(CATEGORY_NAMES)
     submission_df = pd.read_csv('{}/sample_submission.csv'.format(input_dir), index_col='Id', usecols=['Id'])
-    submission_df['Predicted'] = [' '.join(c[category_names]) for c in prediction_categories]
+    submission_df['Predicted'] = [' '.join(category_names[c]) for c in prediction_categories]
     submission_df.to_csv(filename)
 
 
