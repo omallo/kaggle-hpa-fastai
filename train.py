@@ -28,8 +28,8 @@ progressive_image_size_end = 512
 do_train = True
 use_extended_train_set = False
 
-CATEGORIES = list(map(str, range(28)))
-# CATEGORIES = list(map(str, [15, 16, 17, 18, 19, 20, 22, 24, 26, 27]))
+# CATEGORIES = list(map(str, range(28)))
+CATEGORIES = list(map(str, [15, 16, 17, 18, 19, 20, 22, 24, 26, 27]))
 
 name_label_dict = {
     0: ('Nucleoplasm', 12885),
@@ -524,6 +524,9 @@ test_images = (
 
 train_csv = 'train_extended_1.csv' if use_extended_train_set else 'train.csv'
 train_df = pd.read_csv(f'{input_dir}/{train_csv}')
+
+train_df['Target'] = train_df.Target.map(lambda t: ' '.join(set(t.split(' ')).intersection(set(CATEGORIES))))
+train_df = train_df[train_df.Target.map(lambda t: len(t) > 0)].copy()
 
 data = (
     HpaImageItemList
