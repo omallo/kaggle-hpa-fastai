@@ -184,7 +184,7 @@ def focal_loss(input, target, gamma=2.0):
 
 
 def focal_loss_symmetric(input, target, gamma=2.0):
-    inverted_input = 1.0 - input
+    inverted_input = -input
     inverted_target = (target == 0.0).float()
     return focal_loss(input, target, gamma=gamma) + focal_loss(inverted_input, inverted_target, gamma=gamma)
 
