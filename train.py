@@ -14,7 +14,7 @@ from torch.utils.data.sampler import WeightedRandomSampler
 input_dir = '/storage/kaggle/hpa'
 input_dir_external = '/storage/kaggle/hpa_external'
 output_dir = '/artifacts'
-base_model_dir = None  # '/storage/models/hpa/resnet34'
+base_model_dir = '/storage/models/hpa/resnet34'
 image_size = 512
 batch_size = 32
 num_workers = 32
