@@ -183,6 +183,12 @@ def focal_loss(input, target, gamma=2.0):
     return loss.sum(dim=1).mean()
 
 
+def focal_loss_symmetric(input, target, gamma=2.0):
+    inverted_input = 1.0 - input
+    inverted_target = (target == 0.0).float()
+    return focal_loss(input, target, gamma=gamma) + focal_loss(inverted_input, inverted_target, gamma=gamma)
+
+
 def f1_loss(logits, targets):
     epsilon = 1e-6
     beta = 1
@@ -561,7 +567,7 @@ learn = create_cnn(
     ps=0.5,
     split_on=resnet_split,
     path=Path(output_dir),
-    loss_func=focal_loss,
+    loss_func=focal_loss_symmetric,
     metrics=[F1Score()])
 
 early_stopper = \
