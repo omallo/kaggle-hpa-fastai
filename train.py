@@ -1,10 +1,10 @@
 import cv2
 import scipy
 import torchvision
-from fastai import *
 from fastai.callbacks import *
 from fastai.vision import *
 from pretrainedmodels.models.bninception import bninception
+from pretrainedmodels.models.inceptionv4 import inceptionv4
 from pretrainedmodels.models.nasnet import nasnetalarge
 from pretrainedmodels.models.senet import se_resnext50_32x4d, senet154
 from sklearn.metrics import f1_score as skl_f1_score, precision_recall_fscore_support
@@ -14,7 +14,7 @@ from torch.utils.data.sampler import WeightedRandomSampler
 input_dir = '/storage/kaggle/hpa'
 input_dir_external = '/storage/kaggle/hpa_external'
 output_dir = '/artifacts'
-base_model_dir = '/storage/models/hpa/resnet34'
+base_model_dir = None  # '/storage/models/hpa/resnet34'
 image_size = 512
 batch_size = 32
 num_workers = 32
@@ -364,6 +364,21 @@ def inception(pretrained):
     return create_inception(pretrained)
 
 
+def create_inceptionv4(pretrained):
+    model = inceptionv4(pretrained='imagenet' if pretrained else None)
+
+    conv1 = nn.Conv2d(4, 32, kernel_size=3, stride=2, padding=0, bias=False)
+    conv1.weight.data[:, 0:3, :, :] = list(model.features.children())[0].conv.weight.data
+    conv1.weight.data[:, 3, :, :] = list(model.features.children())[0].conv.weight.data[:, 0, :, :].clone()
+    list(model.features.children())[0].conv = conv1
+
+    return model
+
+
+def inception_v4(pretrained):
+    return create_inceptionv4(pretrained)
+
+
 def create_image(fn):
     return Image(pil2tensor(PIL.Image.fromarray(load_image(fn, image_size)), np.float32) / 255.)
 
@@ -561,13 +576,13 @@ if base_model_dir is not None:
 
 learn = create_cnn(
     data,
-    resnet34,
+    inception_v4,
     pretrained=True,
     cut=-2,
     ps=0.5,
-    split_on=resnet_split,
+    # split_on=resnet_split,
     path=Path(output_dir),
-    loss_func=focal_loss_symmetric,
+    loss_func=focal_loss,
     metrics=[F1Score()])
 
 early_stopper = \
